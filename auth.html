@@ -128,8 +128,13 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainApp').style.display = 'flex';
             updateUserInfo();
-            // Load default dashboard
+            // Initialize demo data and load dashboard
+            initializeDemoData();
             showSection('dashboard');
+            // Refresh dashboard with new data
+            setTimeout(() => {
+                loadSectionContent('dashboard');
+            }, 100);
         }
 
         function updateUserInfo() {
@@ -782,6 +787,79 @@
         let hypotheses = JSON.parse(localStorage.getItem('hypotheses') || '[]');
         let scenarios = JSON.parse(localStorage.getItem('scenarios') || '[]');
 
+        // Initialize with demo data if empty
+        function initializeDemoData() {
+            if (hypotheses.length === 0) {
+                hypotheses = [
+                    {
+                        id: 1,
+                        title: "Подобряване на конверсията с 15%",
+                        description: "Чрез оптимизация на checkout процеса очакваме увеличение на конверсията с поне 15% за Q1",
+                        category: "продажби",
+                        priority: "high",
+                        status: "active",
+                        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+                    },
+                    {
+                        id: 2,
+                        title: "Намаляване на customer support заявки",
+                        description: "С новия FAQ раздел очакваме 30% намаление на заявките към поддръжката",
+                        category: "поддръжка",
+                        priority: "medium",
+                        status: "active",
+                        createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+                    },
+                    {
+                        id: 3,
+                        title: "Увеличение на user engagement",
+                        description: "Новата gamification система ще увеличи времето в приложението с 25%",
+                        category: "продукт",
+                        priority: "high",
+                        status: "testing",
+                        createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+                    },
+                    {
+                        id: 4,
+                        title: "Оптимизация на мобилната версия",
+                        description: "Подобряването на мобилния UX ще увеличи мобилните продажби с 20%",
+                        category: "технологии",
+                        priority: "medium",
+                        status: "completed",
+                        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+                    }
+                ];
+                localStorage.setItem('hypotheses', JSON.stringify(hypotheses));
+            }
+
+            if (scenarios.length === 0) {
+                scenarios = [
+                    {
+                        id: 1,
+                        name: "Оптимистичен сценарий Q1",
+                        description: "При успешно изпълнение на всички хипотези за първо тримесечие",
+                        type: "optimistic",
+                        probability: 70,
+                        impact: "high",
+                        kpis: ["конверсия +15%", "приходи +25%", "satisfaction +20%"]
+                    },
+                    {
+                        id: 2,
+                        name: "Реалистичен сценарий",
+                        description: "Умерено изпълнение на поставените цели",
+                        type: "realistic",
+                        probability: 85,
+                        impact: "medium",
+                        kpis: ["конверсия +8%", "приходи +12%", "costs -5%"]
+                    }
+                ];
+                localStorage.setItem('scenarios', JSON.stringify(scenarios));
+            }
+        }
+
         // Tab switching for login
         function switchTab(tab) {
             const tabs = document.querySelectorAll('.login-tab');
@@ -962,6 +1040,12 @@
                     <canvas id="dashboardChart"></canvas>
                 </div>
             `;
+        }
+
+        // Update dashboard function - refreshes the dashboard section
+        function updateDashboard() {
+            // Always try to update dashboard when called
+            loadSectionContent('dashboard');
         }
 
         // Hypotheses HTML
@@ -1185,6 +1269,7 @@
             
             resetHypothesisForm();
             renderHypotheses();
+            updateDashboard(); // Update metrics after adding hypothesis
             
             // Show success message
             alert('Хипотезата е добавена успешно!');
@@ -1234,6 +1319,7 @@
             
             resetScenarioForm();
             renderScenarios();
+            updateDashboard(); // Update metrics after adding scenario
             
             // Show success message
             alert('Сценарият е добавен успешно!');
@@ -1377,11 +1463,7 @@
                 hypotheses = hypotheses.filter(h => h.id !== id);
                 localStorage.setItem('hypotheses', JSON.stringify(hypotheses));
                 renderHypotheses();
-                
-                // Also update dashboard if visible
-                if (document.getElementById('pageTitle').textContent === 'Табло') {
-                    loadSectionContent('dashboard');
-                }
+                updateDashboard(); // Update metrics after deleting hypothesis
             }
         }
 
@@ -1395,11 +1477,7 @@
                 scenarios = scenarios.filter(s => s.id !== id);
                 localStorage.setItem('scenarios', JSON.stringify(scenarios));
                 renderScenarios();
-                
-                // Also update dashboard if visible
-                if (document.getElementById('pageTitle').textContent === 'Табло') {
-                    loadSectionContent('dashboard');
-                }
+                updateDashboard(); // Update metrics after deleting scenario
             }
         }
 
