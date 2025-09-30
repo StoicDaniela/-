@@ -793,43 +793,59 @@
                 hypotheses = [
                     {
                         id: 1,
-                        title: "Подобряване на конверсията с 15%",
-                        description: "Чрез оптимизация на checkout процеса очакваме увеличение на конверсията с поне 15% за Q1",
-                        category: "продажби",
+                        title: "Увеличение на Email CTR с A/B тест",
+                        description: "Тестване на нов subject line за по-висок click-through rate",
+                        category: "marketing",
                         priority: "high",
-                        status: "active",
-                        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-                        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+                        status: "testing",
+                        metrics: ["CTR", "Open Rate"],
+                        target: 15.5,
+                        timeframe: 14,
+                        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                        progress: 65
                     },
                     {
                         id: 2,
-                        title: "Намаляване на customer support заявки",
-                        description: "С новия FAQ раздел очакваме 30% намаление на заявките към поддръжката",
-                        category: "поддръжка",
-                        priority: "medium",
-                        status: "active",
-                        createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-                        updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+                        title: "Оптимизация на Landing Page CVR",
+                        description: "Тест на нов дизайн за увеличаване на конверсиите",
+                        category: "product",
+                        priority: "high",
+                        status: "validated",
+                        metrics: ["Conversion Rate", "Bounce Rate"],
+                        target: 8.2,
+                        timeframe: 21,
+                        createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                        progress: 100
                     },
                     {
                         id: 3,
-                        title: "Увеличение на user engagement",
-                        description: "Новата gamification система ще увеличи времето в приложението с 25%",
-                        category: "продукт",
-                        priority: "high",
-                        status: "testing",
-                        createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-                        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+                        title: "Персонализация на Product Recommendations",
+                        description: "Внедряване на ML алгоритъм за персонализирани препоръки",
+                        category: "product",
+                        priority: "medium",
+                        status: "active",
+                        metrics: ["Revenue per User", "Session Duration"],
+                        target: 23.4,
+                        timeframe: 45,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        progress: 35
                     },
                     {
                         id: 4,
-                        title: "Оптимизация на мобилната версия",
+                        title: "Мобилен UX & CVR оптимизация",
                         description: "Подобряването на мобилния UX ще увеличи мобилните продажби с 20%",
                         category: "технологии",
                         priority: "medium",
                         status: "completed",
+                        metrics: ["Mobile CVR", "Page Speed"],
+                        target: 20.0,
+                        timeframe: 30,
                         createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-                        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+                        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+                        progress: 100
                     }
                 ];
                 localStorage.setItem('hypotheses', JSON.stringify(hypotheses));
@@ -839,21 +855,35 @@
                 scenarios = [
                     {
                         id: 1,
-                        name: "Оптимистичен сценарий Q1",
-                        description: "При успешно изпълнение на всички хипотези за първо тримесечие",
+                        name: "Q4 Revenue Projections",
+                        description: "Оптимистичен сценарий за Q4 със силни коледни продажби",
                         type: "optimistic",
-                        probability: 70,
+                        probability: 75,
                         impact: "high",
-                        kpis: ["конверсия +15%", "приходи +25%", "satisfaction +20%"]
+                        metrics: {
+                            revenue: 2500000,
+                            growth: 25,
+                            customers: 15000,
+                            cvr: 8.5,
+                            ctr: 12.3
+                        },
+                        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
                     },
                     {
                         id: 2,
-                        name: "Реалистичен сценарий",
-                        description: "Умерено изпълнение на поставените цели",
-                        type: "realistic",
-                        probability: 85,
-                        impact: "medium",
-                        kpis: ["конверсия +8%", "приходи +12%", "costs -5%"]
+                        name: "Market Downturn Impact",
+                        description: "Негативен сценарий при икономическа криза",
+                        type: "pessimistic",
+                        probability: 30,
+                        impact: "high",
+                        metrics: {
+                            revenue: 1200000,
+                            growth: -15,
+                            customers: 8000,
+                            cvr: 4.2,
+                            ctr: 6.8
+                        },
+                        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
                     }
                 ];
                 localStorage.setItem('scenarios', JSON.stringify(scenarios));
@@ -993,16 +1023,35 @@
                         <div class="stat-label">Общо хипотези</div>
                     </div>
                     <div class="stat-card">
+                        <div class="stat-value">${hypotheses.filter(h => h.status === 'validated').length}</div>
+                        <div class="stat-label">Валидирани</div>
+                    </div>
+                    <div class="stat-card">
                         <div class="stat-value">${scenarios.length}</div>
-                        <div class="stat-label">Общо сценарии</div>
+                        <div class="stat-label">Активни сценарии</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">87%</div>
+                        <div class="stat-label">Accuracy Rate</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid" style="margin-top: 2rem;">
+                    <div class="stat-card">
+                        <div class="stat-value">12.3%</div>
+                        <div class="stat-label">Avg. CTR</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">6.8%</div>
+                        <div class="stat-label">Conversion Rate</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">${hypotheses.filter(h => h.status === 'testing').length}</div>
                         <div class="stat-label">В тестване</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">${hypotheses.filter(h => h.status === 'validated').length}</div>
-                        <div class="stat-label">Валидирани</div>
+                        <div class="stat-value">${hypotheses.filter(h => h.status === 'completed').length}</div>
+                        <div class="stat-label">Завършени</div>
                     </div>
                 </div>
 
@@ -1078,8 +1127,18 @@
                                 <input type="text" id="hypothesisExpected" class="form-input">
                             </div>
                             <div class="form-group">
+                                <label class="form-label">Цел (%)</label>
+                                <input type="number" id="hypothesisTarget" class="form-input" placeholder="напр. 15.5" step="0.1">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
                                 <label class="form-label">Метрики за успех</label>
-                                <input type="text" id="hypothesisMetrics" class="form-input">
+                                <input type="text" id="hypothesisMetrics" class="form-input" placeholder="напр. CTR, CVR, Conversion Rate, Open Rate">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Времева рамка (дни)</label>
+                                <input type="number" id="hypothesisTimeframe" class="form-input" placeholder="напр. 30" min="1">
                             </div>
                         </div>
                         <div class="action-buttons">
@@ -1258,9 +1317,13 @@
                 description: document.getElementById('hypothesisDescription').value,
                 priority: document.getElementById('hypothesisPriority').value,
                 expectedResult: document.getElementById('hypothesisExpected').value,
+                target: parseFloat(document.getElementById('hypothesisTarget').value) || 0,
                 metrics: document.getElementById('hypothesisMetrics').value,
-                status: 'draft',
-                dateCreated: new Date().toISOString(),
+                timeframe: parseInt(document.getElementById('hypothesisTimeframe').value) || 30,
+                status: 'active',
+                progress: 0,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
                 author: window.currentUser?.email || 'Unknown'
             };
 
@@ -1361,7 +1424,9 @@
             document.getElementById('hypothesisDescription').value = hypothesis.description;
             document.getElementById('hypothesisPriority').value = hypothesis.priority;
             document.getElementById('hypothesisExpected').value = hypothesis.expectedResult || '';
+            document.getElementById('hypothesisTarget').value = hypothesis.target || '';
             document.getElementById('hypothesisMetrics').value = hypothesis.metrics || '';
+            document.getElementById('hypothesisTimeframe').value = hypothesis.timeframe || '';
             
             // Change form to edit mode
             const form = document.getElementById('hypothesisForm');
@@ -1385,8 +1450,10 @@
                 description: document.getElementById('hypothesisDescription').value,
                 priority: document.getElementById('hypothesisPriority').value,
                 expectedResult: document.getElementById('hypothesisExpected').value,
+                target: parseFloat(document.getElementById('hypothesisTarget').value) || 0,
                 metrics: document.getElementById('hypothesisMetrics').value,
-                dateModified: new Date().toISOString()
+                timeframe: parseInt(document.getElementById('hypothesisTimeframe').value) || 30,
+                updatedAt: new Date().toISOString()
             };
 
             localStorage.setItem('hypotheses', JSON.stringify(hypotheses));
@@ -1488,16 +1555,16 @@
                 if (!ctx) return;
 
                 const statusCounts = {
-                    'draft': hypotheses.filter(h => h.status === 'draft').length,
+                    'active': hypotheses.filter(h => h.status === 'active').length,
                     'testing': hypotheses.filter(h => h.status === 'testing').length,
-                    'validated': hypotheses.filter(h => h.status === 'validated').length,
+                    'completed': hypotheses.filter(h => h.status === 'completed').length,
                     'rejected': hypotheses.filter(h => h.status === 'rejected').length
                 };
 
                 new Chart(ctx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Чернови', 'В тестване', 'Валидирани', 'Отхвърлени'],
+                        labels: ['Активни', 'В тестване', 'Завършени', 'Отхвърлени'],
                         datasets: [{
                             data: Object.values(statusCounts),
                             backgroundColor: ['#64748b', '#f59e0b', '#10b981', '#ef4444']
@@ -1584,9 +1651,9 @@
 
         function getStatusText(status) {
             const statuses = {
-                'draft': 'Чернова',
+                'active': 'Активна',
                 'testing': 'В тестване',
-                'validated': 'Валидирана',
+                'completed': 'Завършена',
                 'rejected': 'Отхвърлена'
             };
             return statuses[status] || status;
