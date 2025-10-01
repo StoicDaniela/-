@@ -32,58 +32,132 @@
         window.db = db;
         window.googleProvider = googleProvider;
 
-        // Auth state listener
+        // Auth state listener with improved admin logic
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 console.log('User signed in:', user.email);
                 
-                // Simple role assignment for now (no Firestore dependency)
-                // First logged user becomes admin
-                const isFirstUser = !localStorage.getItem('hasUsers');
-                if (isFirstUser) {
-                    localStorage.setItem('hasUsers', 'true');
+                // Check if user is admin (first user logic)
+                const adminEmail = localStorage.getItem('adminEmail');
+                if (!adminEmail) {
+                    // This is the first user, make them admin
+                    localStorage.setItem('adminEmail', user.email);
                     window.userRole = 'admin';
-                    localStorage.setItem(`role_${user.uid}`, 'admin');
+                    console.log('First user detected - assigning admin role to:', user.email);
+                } else if (adminEmail === user.email) {
+                    // This is the admin
+                    window.userRole = 'admin';
+                    console.log('Admin user logged in:', user.email);
                 } else {
-                    const savedRole = localStorage.getItem(`role_${user.uid}`);
-                    window.userRole = savedRole || 'user';
-                    if (!savedRole) {
-                        localStorage.setItem(`role_${user.uid}`, 'user');
-                    }
+                    // Regular user
+                    window.userRole = 'user';
+                    console.log('Regular user logged in:', user.email);
                 }
                 
                 showMainApp();
                 updateUserInfo();
             } else {
+                console.log('User signed out');
                 showLoginScreen();
+                window.userRole = null;
             }
         });
 
-        // Auth functions
+        // Auth functions with improved error handling
         window.signInWithEmail = async (email, password) => {
             try {
+                console.log('Attempting sign in with email:', email);
                 const result = await signInWithEmailAndPassword(auth, email, password);
+                console.log('Sign in successful');
                 return { success: true, user: result.user };
             } catch (error) {
-                return { success: false, error: error.message };
+                console.error('Sign in error:', error);
+                let errorMessage = error.message;
+                
+                // Translate common Firebase errors to Bulgarian
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMessage = 'Този имейл не е регистриран в системата.';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'Неправилна парола.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Невалиден имейл адрес.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Твърде много неуспешни опити. Опитайте отново по-късно.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessage = 'Проблем с мрежовата връзка. Проверете интернет свързаността.';
+                        break;
+                    default:
+                        errorMessage = `Грешка при влизане: ${error.message}`;
+                }
+                
+                return { success: false, error: errorMessage };
             }
         };
 
         window.signInWithGoogle = async () => {
             try {
+                console.log('Attempting Google sign in');
                 const result = await signInWithPopup(auth, googleProvider);
+                console.log('Google sign in successful');
                 return { success: true, user: result.user };
             } catch (error) {
-                return { success: false, error: error.message };
+                console.error('Google sign in error:', error);
+                let errorMessage = error.message;
+                
+                switch (error.code) {
+                    case 'auth/popup-closed-by-user':
+                        errorMessage = 'Влизането беше прекратено от потребителя.';
+                        break;
+                    case 'auth/popup-blocked':
+                        errorMessage = 'Popup прозорецът е блокиран. Моля разрешете popup прозорци.';
+                        break;
+                    case 'auth/cancelled-popup-request':
+                        errorMessage = 'Заявката за влизане беше отменена.';
+                        break;
+                    default:
+                        errorMessage = `Грешка при Google влизане: ${error.message}`;
+                }
+                
+                return { success: false, error: errorMessage };
             }
         };
 
         window.signUpWithEmail = async (email, password) => {
             try {
+                console.log('Attempting sign up with email:', email);
                 const result = await createUserWithEmailAndPassword(auth, email, password);
+                console.log('Sign up successful');
                 return { success: true, user: result.user };
             } catch (error) {
-                return { success: false, error: error.message };
+                console.error('Sign up error:', error);
+                let errorMessage = error.message;
+                
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'Този имейл вече е регистриран в системата.';
+                        break;
+                    case 'auth/weak-password':
+                        errorMessage = 'Паролата е твърде слаба. Използвайте поне 6 символа.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Невалиден имейл адрес.';
+                        break;
+                    case 'auth/operation-not-allowed':
+                        errorMessage = 'Регистрацията с имейл не е разрешена. Свържете се с администратора.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessage = 'Проблем с мрежовата връзка. Проверете интернет свързаността.';
+                        break;
+                    default:
+                        errorMessage = `Грешка при регистрация: ${error.message}`;
+                }
+                
+                return { success: false, error: errorMessage };
             }
         };
 
@@ -105,17 +179,6 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             setTimeout(updateUIBasedOnRole, 100);
-        }
-
-        // Simplified user role management (without Firestore dependency)
-        async function getUserRole(uid) {
-            return localStorage.getItem(`role_${uid}`) || 'user';
-        }
-
-        async function getAllUsers() {
-            // This is a placeholder - in production you'd get this from Firestore
-            // For now, we'll return current user
-            return [auth.currentUser].filter(Boolean);
         }
 
         // 🎨 Beautiful Notification System
@@ -1366,7 +1429,8 @@
 
     <script>
         // Tab switching for login
-        function switchTab(tab) {
+        // Tab switching - make it global
+        window.switchTab = function(tab) {
             const tabs = document.querySelectorAll('.login-tab');
             const forms = document.querySelectorAll('.login-form');
             
@@ -1377,12 +1441,15 @@
             document.getElementById(tab === 'signin' ? 'signinForm' : 'signupForm').classList.add('active');
         }
 
-        // Auth handlers with beautiful notifications
-        async function handleSignIn(event) {
+        // Auth handlers with beautiful notifications - make them global
+        window.handleSignIn = async function(event) {
             event.preventDefault();
+            console.log('handleSignIn called');
             const form = event.target;
             const email = form.querySelector('input[type="email"]').value;
             const password = form.querySelector('input[type="password"]').value;
+            
+            console.log('Attempting to sign in with:', email);
             
             const result = await window.signInWithEmail(email, password);
             if (result.success) {
@@ -1392,13 +1459,16 @@
             }
         }
 
-        async function handleSignUp(event) {
+        window.handleSignUp = async function(event) {
             event.preventDefault();
+            console.log('handleSignUp called');
             const form = event.target;
             const inputs = form.querySelectorAll('input');
             const email = inputs[0].value;
             const password = inputs[1].value;
             const confirmPassword = inputs[2].value;
+            
+            console.log('Attempting to sign up with:', email);
             
             if (password !== confirmPassword) {
                 createNotification('❌ Паролите не съвпадат!', 'error');
@@ -1413,7 +1483,8 @@
             }
         }
 
-        async function handleGoogleSignIn() {
+        window.handleGoogleSignIn = async function() {
+            console.log('handleGoogleSignIn called');
             const result = await window.signInWithGoogle();
             if (result.success) {
                 createNotification('🚀 Успешен вход с Google!', 'success');
@@ -1422,7 +1493,8 @@
             }
         }
 
-        async function handleSignOut() {
+        window.handleSignOut = async function() {
+            console.log('handleSignOut called');
             const result = await window.signOutUser();
             if (result.success) {
                 createNotification('👋 Успешен изход от системата', 'info');
