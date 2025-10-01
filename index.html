@@ -6,180 +6,32 @@
     <title>STOIC 11 • BI Manager</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- Firebase CDN -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'
-        import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'
-        import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'
-
+    <!-- Firebase CDN - Compatible version -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <script>
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBj-FgO7Zhq80QEKC66qk0SXT3iHDMfwao",
             authDomain: "bi-test-working.firebaseapp.com",
             projectId: "bi-test-working",
             storageBucket: "bi-test-working.firebasestorage.app",
             messagingSenderId: "613966052987",
-            appId: "1:613966052987:web:81933706980db15784ecde",
-            measurementId: "G-WKMVB7MEJT"
+            appId: "1:613966052987:web:81933706980db15784ecde"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+        console.log('Firebase initialized successfully');
+        console.log('Auth object:', auth);
 
         // Make globally available
         window.auth = auth;
-        window.db = db;
         window.googleProvider = googleProvider;
-
-        // Auth state listener with improved admin logic
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                console.log('User signed in:', user.email);
-                
-                // Check if user is admin (first user logic)
-                const adminEmail = localStorage.getItem('adminEmail');
-                if (!adminEmail) {
-                    // This is the first user, make them admin
-                    localStorage.setItem('adminEmail', user.email);
-                    window.userRole = 'admin';
-                    console.log('First user detected - assigning admin role to:', user.email);
-                } else if (adminEmail === user.email) {
-                    // This is the admin
-                    window.userRole = 'admin';
-                    console.log('Admin user logged in:', user.email);
-                } else {
-                    // Regular user
-                    window.userRole = 'user';
-                    console.log('Regular user logged in:', user.email);
-                }
-                
-                showMainApp();
-                updateUserInfo();
-            } else {
-                console.log('User signed out');
-                showLoginScreen();
-                window.userRole = null;
-            }
-        });
-
-        // Auth functions with improved error handling
-        window.signInWithEmail = async (email, password) => {
-            try {
-                console.log('Attempting sign in with email:', email);
-                const result = await signInWithEmailAndPassword(auth, email, password);
-                console.log('Sign in successful');
-                return { success: true, user: result.user };
-            } catch (error) {
-                console.error('Sign in error:', error);
-                let errorMessage = error.message;
-                
-                // Translate common Firebase errors to Bulgarian
-                switch (error.code) {
-                    case 'auth/user-not-found':
-                        errorMessage = 'Този имейл не е регистриран в системата.';
-                        break;
-                    case 'auth/wrong-password':
-                        errorMessage = 'Неправилна парола.';
-                        break;
-                    case 'auth/invalid-email':
-                        errorMessage = 'Невалиден имейл адрес.';
-                        break;
-                    case 'auth/too-many-requests':
-                        errorMessage = 'Твърде много неуспешни опити. Опитайте отново по-късно.';
-                        break;
-                    case 'auth/network-request-failed':
-                        errorMessage = 'Проблем с мрежовата връзка. Проверете интернет свързаността.';
-                        break;
-                    default:
-                        errorMessage = `Грешка при влизане: ${error.message}`;
-                }
-                
-                return { success: false, error: errorMessage };
-            }
-        };
-
-        window.signInWithGoogle = async () => {
-            try {
-                console.log('Attempting Google sign in');
-                const result = await signInWithPopup(auth, googleProvider);
-                console.log('Google sign in successful');
-                return { success: true, user: result.user };
-            } catch (error) {
-                console.error('Google sign in error:', error);
-                let errorMessage = error.message;
-                
-                switch (error.code) {
-                    case 'auth/popup-closed-by-user':
-                        errorMessage = 'Влизането беше прекратено от потребителя.';
-                        break;
-                    case 'auth/popup-blocked':
-                        errorMessage = 'Popup прозорецът е блокиран. Моля разрешете popup прозорци.';
-                        break;
-                    case 'auth/cancelled-popup-request':
-                        errorMessage = 'Заявката за влизане беше отменена.';
-                        break;
-                    default:
-                        errorMessage = `Грешка при Google влизане: ${error.message}`;
-                }
-                
-                return { success: false, error: errorMessage };
-            }
-        };
-
-        window.signUpWithEmail = async (email, password) => {
-            try {
-                console.log('Attempting sign up with email:', email);
-                const result = await createUserWithEmailAndPassword(auth, email, password);
-                console.log('Sign up successful');
-                return { success: true, user: result.user };
-            } catch (error) {
-                console.error('Sign up error:', error);
-                let errorMessage = error.message;
-                
-                switch (error.code) {
-                    case 'auth/email-already-in-use':
-                        errorMessage = 'Този имейл вече е регистриран в системата.';
-                        break;
-                    case 'auth/weak-password':
-                        errorMessage = 'Паролата е твърде слаба. Използвайте поне 6 символа.';
-                        break;
-                    case 'auth/invalid-email':
-                        errorMessage = 'Невалиден имейл адрес.';
-                        break;
-                    case 'auth/operation-not-allowed':
-                        errorMessage = 'Регистрацията с имейл не е разрешена. Свържете се с администратора.';
-                        break;
-                    case 'auth/network-request-failed':
-                        errorMessage = 'Проблем с мрежовата връзка. Проверете интернет свързаността.';
-                        break;
-                    default:
-                        errorMessage = `Грешка при регистрация: ${error.message}`;
-                }
-                
-                return { success: false, error: errorMessage };
-            }
-        };
-
-        window.signOutUser = async () => {
-            try {
-                await signOut(auth);
-                return { success: true };
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        };
-
-        function showLoginScreen() {
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('mainApp').style.display = 'none';
-        }
-
-        function showMainApp() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
-            setTimeout(updateUIBasedOnRole, 100);
-        }
 
         // 🎨 Beautiful Notification System
         function createNotification(message, type = 'info') {
@@ -213,66 +65,188 @@
                     z-index: 10000;
                     max-width: 400px;
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    animation: slideInRight 0.3s ease-out;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.75rem;
+                    font-size: 0.95rem;
+                    animation: slideIn 0.3s ease-out;
                 ">
-                    <i class="${color.icon}" style="font-size: 1.2rem;"></i>
-                    <span style="flex: 1; font-weight: 500;">${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" style="
-                        background: rgba(255,255,255,0.2);
-                        border: none;
-                        color: white;
-                        border-radius: 50%;
-                        width: 24px;
-                        height: 24px;
-                        cursor: pointer;
-                        font-size: 0.8rem;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    ">×</button>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="${color.icon}" style="font-size: 1.1rem;"></i>
+                        <span>${message}</span>
+                    </div>
                 </div>
+                <style>
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                </style>
             `;
-
+            
             document.body.appendChild(notification);
-
+            
             // Auto remove after 5 seconds
             setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.style.animation = 'slideOutRight 0.3s ease-in';
+                if (notification.parentNode) {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(100%)';
                     setTimeout(() => notification.remove(), 300);
                 }
             }, 5000);
         }
 
-        // Add animation styles to head
-        if (!document.querySelector('#notification-styles')) {
-            const style = document.createElement('style');
-            style.id = 'notification-styles';
-            style.textContent = `
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOutRight {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
+        // Auth functions with improved error handling
+        window.signInWithEmail = async function(email, password) {
+            try {
+                console.log('🔐 Attempting sign in with email:', email);
+                const result = await auth.signInWithEmailAndPassword(email, password);
+                console.log('✅ Sign in successful:', result.user.email);
+                return { success: true, user: result.user };
+            } catch (error) {
+                console.error('❌ Sign in error:', error.code, error.message);
+                let errorMessage = error.message;
+                
+                // Translate common Firebase errors to Bulgarian
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMessage = 'Този имейл не е регистриран в системата.';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'Неправилна парола.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Невалиден имейл адрес.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Твърде много неуспешни опити. Опитайте отново по-късно.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessage = 'Проблем с мрежовата връзка. Проверете интернет свързаността.';
+                        break;
+                    default:
+                        errorMessage = `Грешка при влизане: ${error.message}`;
                 }
                 
-                /* Mobile responsive notifications */
-                @media (max-width: 768px) {
-                    .custom-notification > div {
-                        right: 10px !important;
-                        left: 10px !important;
-                        max-width: calc(100vw - 20px) !important;
-                        top: 10px !important;
-                        font-size: 0.9rem !important;
-                    }
+                return { success: false, error: errorMessage };
+            }
+        };
+
+        window.signInWithGoogle = async function() {
+            try {
+                console.log('🌐 Attempting Google sign in');
+                const result = await auth.signInWithPopup(googleProvider);
+                console.log('✅ Google sign in successful:', result.user.email);
+                return { success: true, user: result.user };
+            } catch (error) {
+                console.error('❌ Google sign in error:', error.code, error.message);
+                let errorMessage = error.message;
+                
+                switch (error.code) {
+                    case 'auth/popup-closed-by-user':
+                        errorMessage = 'Влизането беше прекратено от потребителя.';
+                        break;
+                    case 'auth/popup-blocked':
+                        errorMessage = 'Popup прозорецът е блокиран. Моля разрешете popup прозорци.';
+                        break;
+                    case 'auth/cancelled-popup-request':
+                        errorMessage = 'Заявката за влизане беше отменена.';
+                        break;
+                    default:
+                        errorMessage = `Грешка при Google влизане: ${error.message}`;
                 }
-            `;
-            document.head.appendChild(style);
+                
+                return { success: false, error: errorMessage };
+            }
+        };
+
+        window.signUpWithEmail = async function(email, password) {
+            try {
+                console.log('📝 Attempting sign up with email:', email);
+                const result = await auth.createUserWithEmailAndPassword(email, password);
+                console.log('✅ Sign up successful:', result.user.email);
+                return { success: true, user: result.user };
+            } catch (error) {
+                console.error('❌ Sign up error:', error.code, error.message);
+                let errorMessage = error.message;
+                
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'Този имейл вече е регистриран в системата.';
+                        break;
+                    case 'auth/weak-password':
+                        errorMessage = 'Паролата е твърде слаба. Използвайте поне 6 символа.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Невалиден имейл адрес.';
+                        break;
+                    case 'auth/operation-not-allowed':
+                        errorMessage = 'Регистрацията с имейл не е разрешена. Свържете се с администратора.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessage = 'Проблем с мрежовата връзка. Проверете интернет свързаността.';
+                        break;
+                    default:
+                        errorMessage = `Грешка при регистрация: ${error.message}`;
+                }
+                
+                return { success: false, error: errorMessage };
+            }
+        };
+
+        window.signOutUser = async function() {
+            try {
+                console.log('👋 Signing out user');
+                await auth.signOut();
+                console.log('✅ Sign out successful');
+                return { success: true };
+            } catch (error) {
+                console.error('❌ Sign out error:', error);
+                return { success: false, error: error.message };
+            }
+        };
+
+        // Auth state listener with improved admin logic
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                console.log('👤 User signed in:', user.email);
+                
+                // Check if user is admin (first user logic)
+                const adminEmail = localStorage.getItem('adminEmail');
+                if (!adminEmail) {
+                    // This is the first user, make them admin
+                    localStorage.setItem('adminEmail', user.email);
+                    window.userRole = 'admin';
+                    console.log('👑 First user detected - assigning admin role to:', user.email);
+                } else if (adminEmail === user.email) {
+                    // This is the admin
+                    window.userRole = 'admin';
+                    console.log('👑 Admin user logged in:', user.email);
+                } else {
+                    // Regular user
+                    window.userRole = 'user';
+                    console.log('👤 Regular user logged in:', user.email);
+                }
+                
+                showMainApp();
+                updateUserInfo();
+            } else {
+                console.log('🚪 User signed out');
+                showLoginScreen();
+                window.userRole = null;
+            }
+        });
+
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+
+        function showMainApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            setTimeout(() => {
+                if (window.updateUIBasedOnRole) {
+                    window.updateUIBasedOnRole();
+                }
+            }, 100);
         }
 
         function updateUserInfo() {
@@ -331,6 +305,108 @@
                 });
             }
         };
+
+        // Auth handlers - make them global
+        window.handleSignIn = async function(event) {
+            event.preventDefault();
+            console.log('🔥 handleSignIn called');
+            const form = event.target;
+            const email = form.querySelector('input[type="email"]').value;
+            const password = form.querySelector('input[type="password"]').value;
+            
+            console.log('📧 Attempting to sign in with:', email);
+            
+            if (!email || !password) {
+                createNotification('❌ Моля въведете имейл и парола!', 'error');
+                return;
+            }
+            
+            const result = await window.signInWithEmail(email, password);
+            if (result.success) {
+                createNotification('✅ Успешен вход в системата!', 'success');
+            } else {
+                createNotification('❌ ' + result.error, 'error');
+            }
+        }
+
+        window.handleSignUp = async function(event) {
+            event.preventDefault();
+            console.log('🔥 handleSignUp called');
+            const form = event.target;
+            const inputs = form.querySelectorAll('input');
+            const email = inputs[0].value;
+            const password = inputs[1].value;
+            const confirmPassword = inputs[2].value;
+            
+            console.log('📧 Attempting to sign up with:', email);
+            
+            if (!email || !password || !confirmPassword) {
+                createNotification('❌ Моля попълнете всички полета!', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                createNotification('❌ Паролите не съвпадат!', 'error');
+                return;
+            }
+            
+            const result = await window.signUpWithEmail(email, password);
+            if (result.success) {
+                createNotification('🎉 Успешна регистрация! Добре дошли!', 'success');
+            } else {
+                createNotification('❌ ' + result.error, 'error');
+            }
+        }
+
+        window.handleGoogleSignIn = async function() {
+            console.log('🔥 handleGoogleSignIn called');
+            const result = await window.signInWithGoogle();
+            if (result.success) {
+                createNotification('🚀 Успешен вход с Google!', 'success');
+            } else {
+                createNotification('❌ ' + result.error, 'error');
+            }
+        }
+
+        window.handleSignOut = async function() {
+            console.log('🔥 handleSignOut called');
+            const result = await window.signOutUser();
+            if (result.success) {
+                createNotification('👋 Успешен изход от системата', 'info');
+            } else {
+                createNotification('❌ Грешка при изход: ' + result.error, 'error');
+            }
+        }
+
+        // Tab switching - make it global
+        window.switchTab = function(tab) {
+            console.log('🔄 Switching to tab:', tab);
+            
+            // Hide all forms
+            document.querySelectorAll('.login-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.login-tab').forEach(tabBtn => {
+                tabBtn.classList.remove('active');
+            });
+            
+            // Show selected form
+            document.getElementById(tab + 'Form').classList.add('active');
+            
+            // Set active tab
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+        }
+
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOM ready, setting up authentication...');
+            
+            // Test Firebase connectivity
+            console.log('🔥 Firebase Auth object:', window.auth);
+            console.log('🌐 Google Provider:', window.googleProvider);
+        });
     </script>
     
     <style>
@@ -363,53 +439,57 @@
         }
 
         .login-container {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
             padding: 2.5rem;
             width: 100%;
-            max-width: 400px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 420px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
         }
 
         .login-title {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 700;
-            color: #fff;
             text-align: center;
             margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .login-subtitle {
-            color: #94a3b8;
             text-align: center;
+            color: #94a3b8;
             margin-bottom: 2rem;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
         }
 
         .login-tabs {
             display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 4px;
             margin-bottom: 2rem;
-            background: #0f172a;
-            border-radius: 0.5rem;
-            padding: 0.25rem;
         }
 
         .login-tab {
             flex: 1;
-            padding: 0.75rem;
+            padding: 12px;
             background: transparent;
             border: none;
-            color: #64748b;
-            font-weight: 500;
-            border-radius: 0.375rem;
+            color: #94a3b8;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
 
         .login-tab.active {
-            background: #3b82f6;
-            color: #fff;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
         }
 
         .login-form {
@@ -422,55 +502,55 @@
 
         .login-input {
             width: 100%;
-            padding: 0.875rem;
-            background: #0f172a;
-            border: 1px solid #475569;
-            border-radius: 0.5rem;
-            color: #e2e8f0;
+            padding: 15px 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
             font-size: 1rem;
             margin-bottom: 1rem;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
         }
 
         .login-input:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .login-input::placeholder {
+            color: #94a3b8;
         }
 
         .login-btn {
             width: 100%;
-            padding: 0.875rem;
-            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
-            color: #fff;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
-            border-radius: 0.5rem;
+            border-radius: 12px;
+            color: white;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
             margin-bottom: 1rem;
         }
 
         .login-btn:hover {
-            background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
 
         .login-btn-google {
-            background: #fff;
-            color: #374151;
-            border: 1px solid #d1d5db;
-        }
-
-        .login-btn-google:hover {
-            background: #f9fafb;
+            background: linear-gradient(135deg, #ea4335 0%, #fbbc05 25%, #34a853 50%, #4285f4 75%);
         }
 
         .login-divider {
             text-align: center;
             margin: 1.5rem 0;
-            color: #64748b;
             position: relative;
+            color: #94a3b8;
         }
 
         .login-divider::before {
@@ -480,81 +560,19 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: #334155;
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .login-divider span {
-            background: #1e293b;
+            background: #0a0e27;
             padding: 0 1rem;
+            position: relative;
+            z-index: 1;
         }
 
-        /* User Info Styles */
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            background: #1e293b;
-            border-radius: 0.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid #334155;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #a78e21 0%, #c8a926 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .user-details h3 {
-            color: #fff;
-            font-size: 0.9rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .user-details p {
-            color: #94a3b8;
-            font-size: 0.8rem;
-            margin: 0;
-        }
-
-        .logout-btn {
-            margin-left: auto;
-            padding: 0.5rem 1rem;
-            background: #ef4444;
-            color: #fff;
-            border: none;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: background 0.2s;
-        }
-
-        .logout-btn:hover {
-            background: #dc2626;
-        }
-
-        /* Permission notice */
-        .permission-notice {
-            background: #fef3c7;
-            border: 1px solid #fbbf24;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            color: #92400e;
-            font-size: 0.9rem;
-        }
-
-        .permission-notice.admin {
-            background: #d1fae5;
-            border-color: #10b981;
-            color: #065f46;
+        /* Main App Styles */
+        #mainApp {
+            display: none;
         }
 
         .container {
@@ -563,52 +581,117 @@
             padding: 2rem;
         }
 
-        /* Header */
+        .user-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .user-details h3 {
+            margin: 0;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .user-details p {
+            margin: 0;
+            color: #94a3b8;
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .permission-notice {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .permission-notice.admin {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.3);
+            color: #fbbf24;
+        }
+
         .header {
             text-align: center;
             margin-bottom: 3rem;
-            padding: 2rem 0;
         }
 
         .title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #fff;
+            font-size: 3rem;
+            font-weight: 800;
             margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .subtitle {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             color: #94a3b8;
-            margin-bottom: 1rem;
+            margin-bottom: 2rem;
         }
 
         .nav-links {
             display: flex;
             justify-content: center;
             gap: 2rem;
-            margin-top: 1.5rem;
+            flex-wrap: wrap;
         }
 
         .nav-link {
-            color: #64748b;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: #e2e8f0;
             text-decoration: none;
+            transition: all 0.3s ease;
             font-weight: 500;
-            transition: color 0.2s;
         }
 
-        .nav-link:hover,
-        .nav-link.active {
-            color: #fff;
-        }
-
-        /* Main Sections */
-        .section {
-            background: #1e293b;
-            border-radius: 0.75rem;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid #334155;
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            color: white;
+            transform: translateY(-2px);
         }
 
         .content-section {
@@ -619,90 +702,180 @@
             display: block;
         }
 
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
         .section-title {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: 600;
-            color: #fff;
             margin-bottom: 1.5rem;
+            color: white;
             display: flex;
             align-items: center;
+            gap: 0.75rem;
+        }
+
+        .results-area {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .results-placeholder {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .results-subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #a78e21 0%, #c4a635 100%);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(167, 142, 33, 0.4);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .info-messages {
+            display: flex;
+            flex-direction: column;
             gap: 0.5rem;
         }
 
-        .section-title i {
-            color: #3b82f6;
+        .info-item {
+            color: #94a3b8;
+            font-size: 0.9rem;
         }
 
-        /* Form Styles */
         .form-group {
             margin-bottom: 1.5rem;
         }
 
         .form-label {
             display: block;
-            font-weight: 500;
-            color: #e2e8f0;
             margin-bottom: 0.5rem;
-            font-size: 0.9rem;
+            color: #e2e8f0;
+            font-weight: 500;
         }
 
-        .form-input,
-        .form-select,
         .form-textarea {
             width: 100%;
-            padding: 0.75rem;
-            background: #0f172a;
-            border: 1px solid #475569;
-            border-radius: 0.5rem;
-            color: #e2e8f0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
             font-size: 1rem;
-            transition: border-color 0.2s;
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
         }
 
-        .form-input:focus,
-        .form-select:focus,
         .form-textarea:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
         }
 
-        .form-textarea {
-            resize: vertical;
-            min-height: 100px;
+        .form-textarea::placeholder {
+            color: #94a3b8;
         }
 
-        /* Quick Tags */
         .quick-tags-section {
-            margin: 1.5rem 0;
+            margin-bottom: 2rem;
         }
 
         .quick-tags-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #e2e8f0;
+            color: #94a3b8;
             margin-bottom: 1rem;
+            font-size: 0.9rem;
         }
 
         .quick-tags-categories {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .quick-tags-category {
-            background: #0f172a;
-            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
             padding: 1rem;
-            border: 1px solid #334155;
         }
 
         .category-title {
-            font-size: 0.85rem;
+            color: #e2e8f0;
             font-weight: 600;
-            color: #94a3b8;
-            margin-bottom: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
         }
 
         .quick-tags {
@@ -712,354 +885,103 @@
         }
 
         .quick-tag {
-            background: #1e293b;
-            border: 1px solid #475569;
-            border-radius: 0.375rem;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.85rem;
-            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
         }
 
         .quick-tag:hover {
-            background: #3b82f6;
-            border-color: #3b82f6;
-            color: #fff;
+            background: rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.5);
         }
 
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: #3b82f6;
-            color: #fff;
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s;
-            text-decoration: none;
-        }
-
-        .btn:hover {
-            background: #2563eb;
-        }
-
-        /* Generate-style Button (Updated theme) */
-        .btn-generate {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            padding: 1rem 2rem;
-            background: linear-gradient(135deg, #a78e21 0%, #c8a926 100%);
-            color: #fff;
-            border: none;
-            border-radius: 0.75rem;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            box-shadow: 0 4px 12px rgba(167, 142, 33, 0.3);
-            min-width: 200px;
-        }
-
-        .btn-generate:hover {
-            background: linear-gradient(135deg, #8f7a1e 0%, #a78e21 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(167, 142, 33, 0.4);
-        }
-
-        .btn-generate:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 8px rgba(167, 142, 33, 0.3);
-        }
-
-        /* Dashboard Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #3b82f6;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            color: #94a3b8;
-        }
-
-        /* Results Area */
-        .results-area {
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 0.5rem;
-            padding: 2rem;
-            text-align: center;
-            min-height: 200px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .results-placeholder {
-            color: #64748b;
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .results-subtitle {
-            color: #475569;
-            font-size: 0.9rem;
-        }
-
-        /* Data Table */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #0f172a;
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
-
-        .data-table th,
-        .data-table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #334155;
-        }
-
-        .data-table th {
-            background: #1e293b;
-            color: #e2e8f0;
-            font-weight: 600;
-        }
-
-        .data-table td {
-            color: #94a3b8;
-        }
-
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .status-active {
-            background: #10b981;
-            color: #fff;
-        }
-
-        .status-pending {
-            background: #f59e0b;
-            color: #fff;
-        }
-
-        .status-completed {
-            background: #3b82f6;
-            color: #fff;
-        }
-
-        /* Info Messages */
-        .info-messages {
-            margin-top: 1.5rem;
-            padding: 1rem;
-            background: #0f172a;
-            border-radius: 0.5rem;
-            border: 1px solid #334155;
-        }
-
-        .info-item {
-            color: #64748b;
-            font-size: 0.85rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .info-item:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Tips Section */
-        .tips-section {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .tips-title {
-            color: #e2e8f0;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            font-size: 0.9rem;
-        }
-
-        .tips-content {
-            color: #94a3b8;
-            font-size: 0.85rem;
-            line-height: 1.5;
-        }
-
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 2rem;
-            color: #64748b;
-            font-size: 0.8rem;
-        }
-
-        /* 📱 MOBILE RESPONSIVE CSS */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            /* Fix viewport and prevent horizontal scrolling */
-            body {
-                overflow-x: hidden;
-                width: 100%;
-                max-width: 100vw;
-            }
-
-            /* Container adjustments */
-            .container {
-                padding: 1rem;
-                max-width: 100%;
-                margin: 0;
-                width: 100%;
-            }
-
-            /* Login container mobile fixes */
             .login-container {
                 margin: 1rem;
-                padding: 1.5rem;
+                padding: 2rem;
                 max-width: calc(100vw - 2rem);
-                width: calc(100% - 2rem);
             }
 
-            .login-title {
-                font-size: 1.5rem;
+            .container {
+                padding: 1rem;
             }
 
-            /* Header mobile */
-            .header {
-                padding: 1rem 0;
-                margin-bottom: 1.5rem;
+            .user-info {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
             }
 
             .title {
-                font-size: 1.8rem;
-            }
-
-            .subtitle {
-                font-size: 1rem;
+                font-size: 2rem;
             }
 
             .nav-links {
-                flex-direction: column;
                 gap: 1rem;
-                align-items: center;
             }
 
-            /* Sections mobile */
+            .nav-link {
+                font-size: 0.9rem;
+                padding: 10px 18px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1.5rem;
+            }
+
+            .stat-value {
+                font-size: 2rem;
+            }
+
+            .stat-label {
+                font-size: 0.8rem;
+            }
+
             .section {
-                padding: 1rem;
-                margin-bottom: 1rem;
+                padding: 1.5rem;
             }
 
-            /* Form elements mobile */
-            .form-group {
-                margin-bottom: 1rem;
+            .section-title {
+                font-size: 1.5rem;
             }
 
-            .form-group label {
-                font-size: 0.9rem;
+            .results-area {
+                padding: 2rem 1rem;
             }
 
-            .form-input, .form-textarea, .form-select {
-                padding: 0.75rem;
-                font-size: 16px; /* Prevents zoom on iOS */
+            .results-placeholder {
+                font-size: 1.5rem;
             }
 
-            /* Button adjustments */
+            .results-subtitle {
+                font-size: 1rem;
+            }
+
             .btn-generate {
-                width: 100%;
-                padding: 0.875rem 1rem;
-                min-width: auto;
+                padding: 12px 24px;
                 font-size: 0.9rem;
             }
 
-            .btn {
-                padding: 0.75rem 1rem;
-                font-size: 0.9rem;
+            .quick-tags-categories {
+                gap: 0.75rem;
             }
 
-            /* User info mobile */
-            .user-info {
-                flex-direction: column;
-                text-align: center;
-                gap: 0.5rem;
-            }
-
-            .logout-btn {
-                margin-left: 0;
-                width: 100%;
-                margin-top: 0.5rem;
-            }
-
-            /* Grid layouts mobile */
-            .form-row {
-                flex-direction: column;
-            }
-
-            .form-row .form-group {
-                width: 100%;
-            }
-
-            /* Table responsiveness */
-            .table-container {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            table {
-                min-width: 100%;
+            .category-title {
                 font-size: 0.8rem;
             }
 
-            /* Charts mobile */
-            .chart-container {
-                height: 250px !important;
-                margin-bottom: 1rem;
-            }
-
-            /* Permission notice mobile */
-            .permission-notice {
-                padding: 0.75rem;
-                font-size: 0.8rem;
-            }
-
-            /* Footer mobile */
-            .footer {
-                padding: 1rem;
+            .quick-tag {
                 font-size: 0.75rem;
             }
         }
@@ -1262,67 +1184,20 @@
                                     <div class="quick-tags">
                                         <span class="quick-tag">ROI</span>
                                         <span class="quick-tag">Конверсия</span>
-                                        <span class="quick-tag">Ефективност</span>
-                                        <span class="quick-tag">Клиентска Сатисфакция</span>
-                                        <span class="quick-tag">Време за изпълнение</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="quick-tags-category">
-                                    <div class="category-title">Приоритет</div>
-                                    <div class="quick-tags">
-                                        <span class="quick-tag">Висок</span>
-                                        <span class="quick-tag">Среден</span>
-                                        <span class="quick-tag">Нисък</span>
-                                        <span class="quick-tag">Критичен</span>
-                                        <span class="quick-tag">Експериментален</span>
+                                        <span class="quick-tag">Задържане</span>
+                                        <span class="quick-tag">LTV</span>
+                                        <span class="quick-tag">CAC</span>
+                                        <span class="quick-tag">Churn Rate</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Очакван резултат (%)</label>
-                            <input type="number" class="form-input" placeholder="15" min="0" max="100">
-                        </div>
-
-                        <button type="submit" class="btn">
-                            <i class="fas fa-save"></i>
-                            Създай Хипотеза
+                        <button type="submit" class="btn-generate">
+                            <i class="fas fa-magic"></i>
+                            Генерирай Хипотеза
                         </button>
                     </form>
-                </div>
-
-                <!-- Generated Results -->
-                <div class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-list"></i>
-                        Съхранени Хипотези
-                    </h2>
-                    
-                    <div class="results-area">
-                        <div class="results-placeholder">Готов за създаване</div>
-                        <div class="results-subtitle">Попълнете формата по-горе и създайте първата си BI хипотеза</div>
-                        <button class="btn-generate" style="margin-top: 1.5rem;" onclick="document.querySelector('form textarea').focus()">
-                            <i class="fas fa-lightbulb"></i>
-                            Създай Първа Хипотеза
-                        </button>
-                    </div>
-
-                    <div class="info-messages">
-                        <div class="info-item">Създаването отнема 5-10 секунди</div>
-                        <div class="info-item">Хипотезите се съхраняват локално (макс. 20)</div>
-                        <div class="info-item">Система: STOIC 11 • Професионална версия</div>
-                    </div>
-                </div>
-
-                <div class="tips-section">
-                    <div class="tips-title">
-                        💡 <strong>Съвети:</strong>
-                    </div>
-                    <div class="tips-content">
-                        Използвайте конкретни метрики, времеви рамки и измерими цели за по-добри резултати. Опитайте "Увеличаване продажби | Онлайн канали | 15% ръст | 3 месеца" за по-точни анализи.
-                    </div>
                 </div>
             </section>
 
@@ -1331,47 +1206,21 @@
                 <div class="section">
                     <h2 class="section-title">
                         <i class="fas fa-sitemap"></i>
-                        Анализ на Сценарии
+                        Моделиране на Сценарии
                     </h2>
                     
                     <form>
                         <div class="form-group">
-                            <label class="form-label">Опишете бизнес сценария</label>
-                            <textarea class="form-textarea" placeholder="Напр. Отваряне на нов офис в София..." rows="4"></textarea>
+                            <label class="form-label">Опишете бизнес сценария за анализ</label>
+                            <textarea class="form-textarea" placeholder="Напр. Какво ще се случи ако намалим цените с 10% и увеличим маркетинговия бюджет с 20%..." rows="4"></textarea>
+                            <div style="text-align: right; color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">0/500 знака</div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Тип сценарий</label>
-                            <select class="form-select">
-                                <option>Изберете тип</option>
-                                <option>Оптимистичен</option>
-                                <option>Реалистичен</option>
-                                <option>Песимистичен</option>
-                                <option>Стрес тест</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" class="btn">
-                            <i class="fas fa-play"></i>
-                            Анализирай Сценарий
-                        </button>
-                    </form>
-                </div>
-
-                <div class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-chart-bar"></i>
-                        Резултати от Анализ
-                    </h2>
-                    
-                    <div class="results-area">
-                        <div class="results-placeholder">Готов за анализ</div>
-                        <div class="results-subtitle">Създайте сценарий за да видите детайлни прогнози</div>
-                        <button class="btn-generate" style="margin-top: 1.5rem;" onclick="document.querySelector('#scenarios textarea').focus()">
-                            <i class="fas fa-sitemap"></i>
+                        <button type="submit" class="btn-generate">
+                            <i class="fas fa-calculator"></i>
                             Моделирай Сценарий
                         </button>
-                    </div>
+                    </form>
                 </div>
             </section>
 
@@ -1380,129 +1229,27 @@
                 <div class="section">
                     <h2 class="section-title">
                         <i class="fas fa-chart-bar"></i>
-                        Текущи Анализи
+                        Бизнес Анализ
                     </h2>
                     
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Хипотеза/Сценарий</th>
-                                <th>Тип</th>
-                                <th>Статус</th>
-                                <th>Резултат</th>
-                                <th>Дата</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Увеличаване на продажбите</td>
-                                <td>Хипотеза</td>
-                                <td><span class="status-badge status-active">Активна</span></td>
-                                <td>+12%</td>
-                                <td>2025-09-28</td>
-                            </tr>
-                            <tr>
-                                <td>Нов офис София</td>
-                                <td>Сценарий</td>
-                                <td><span class="status-badge status-pending">В процес</span></td>
-                                <td>-</td>
-                                <td>2025-09-25</td>
-                            </tr>
-                            <tr>
-                                <td>Автоматизация процеси</td>
-                                <td>Хипотеза</td>
-                                <td><span class="status-badge status-completed">Завършен</span></td>
-                                <td>+25%</td>
-                                <td>2025-09-20</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <form>
+                        <div class="form-group">
+                            <label class="form-label">Какви данни искате да анализирате?</label>
+                            <textarea class="form-textarea" placeholder="Напр. Анализ на продажбите за последните 6 месеца по региони и продуктови категории..." rows="4"></textarea>
+                            <div style="text-align: right; color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">0/500 знака</div>
+                        </div>
+
+                        <button type="submit" class="btn-generate">
+                            <i class="fas fa-search"></i>
+                            Стартирай Анализ
+                        </button>
+                    </form>
                 </div>
             </section>
-
-            <!-- Footer -->
-            <footer class="footer">
-                <p>Създадено от MiniMax Agent</p>
-            </footer>
         </div>
     </div>
 
     <script>
-        // Tab switching for login
-        // Tab switching - make it global
-        window.switchTab = function(tab) {
-            const tabs = document.querySelectorAll('.login-tab');
-            const forms = document.querySelectorAll('.login-form');
-            
-            tabs.forEach(t => t.classList.remove('active'));
-            forms.forEach(f => f.classList.remove('active'));
-            
-            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
-            document.getElementById(tab === 'signin' ? 'signinForm' : 'signupForm').classList.add('active');
-        }
-
-        // Auth handlers with beautiful notifications - make them global
-        window.handleSignIn = async function(event) {
-            event.preventDefault();
-            console.log('handleSignIn called');
-            const form = event.target;
-            const email = form.querySelector('input[type="email"]').value;
-            const password = form.querySelector('input[type="password"]').value;
-            
-            console.log('Attempting to sign in with:', email);
-            
-            const result = await window.signInWithEmail(email, password);
-            if (result.success) {
-                createNotification('✅ Успешен вход в системата!', 'success');
-            } else {
-                createNotification('❌ Грешка при вход: ' + result.error, 'error');
-            }
-        }
-
-        window.handleSignUp = async function(event) {
-            event.preventDefault();
-            console.log('handleSignUp called');
-            const form = event.target;
-            const inputs = form.querySelectorAll('input');
-            const email = inputs[0].value;
-            const password = inputs[1].value;
-            const confirmPassword = inputs[2].value;
-            
-            console.log('Attempting to sign up with:', email);
-            
-            if (password !== confirmPassword) {
-                createNotification('❌ Паролите не съвпадат!', 'error');
-                return;
-            }
-            
-            const result = await window.signUpWithEmail(email, password);
-            if (result.success) {
-                createNotification('🎉 Успешна регистрация! Добре дошли!', 'success');
-            } else {
-                createNotification('❌ Грешка при регистрация: ' + result.error, 'error');
-            }
-        }
-
-        window.handleGoogleSignIn = async function() {
-            console.log('handleGoogleSignIn called');
-            const result = await window.signInWithGoogle();
-            if (result.success) {
-                createNotification('🚀 Успешен вход с Google!', 'success');
-            } else {
-                createNotification('❌ Грешка при вход с Google: ' + result.error, 'error');
-            }
-        }
-
-        window.handleSignOut = async function() {
-            console.log('handleSignOut called');
-            const result = await window.signOutUser();
-            if (result.success) {
-                createNotification('👋 Успешен изход от системата', 'info');
-            } else {
-                createNotification('❌ Грешка при изход: ' + result.error, 'error');
-            }
-        }
-
         // Navigation
         function showSection(sectionId) {
             // Hide all sections
@@ -1574,7 +1321,7 @@
                 
                 // Check permissions
                 if (window.userRole !== 'admin') {
-                    alert('Нужни са администраторски права за тази операция');
+                    createNotification('🔒 Нужни са администраторски права за тази операция', 'warning');
                     return;
                 }
                 
@@ -1585,7 +1332,7 @@
                 submitBtn.disabled = true;
                 
                 setTimeout(() => {
-                    alert('Данните са запазени успешно!');
+                    createNotification('✅ Данните са запазени успешно!', 'success');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                     this.reset();
@@ -1603,7 +1350,7 @@
         document.querySelectorAll('.btn-generate').forEach(button => {
             button.addEventListener('click', function() {
                 if (window.userRole !== 'admin') {
-                    alert('Нужни са администраторски права за генериране на анализи');
+                    createNotification('🔒 Нужни са администраторски права за генериране на анализи', 'warning');
                     return;
                 }
                 
