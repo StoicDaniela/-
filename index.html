@@ -9,7 +9,7 @@
     <!-- Firebase CDN -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'
-        import { getFirestore, collection, addDoc, getDocs, setDoc, doc, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'
         import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'
 
         const firebaseConfig = {
@@ -37,13 +37,19 @@
             if (user) {
                 console.log('User signed in:', user.email);
                 
-                // Save/update user in Firestore and check role
-                try {
-                    await saveUserToFirestore(user);
-                    window.userRole = await getUserRole(user.uid);
-                } catch (error) {
-                    console.error('Error managing user role:', error);
-                    window.userRole = 'user'; // Default to user if error
+                // Simple role assignment for now (no Firestore dependency)
+                // First logged user becomes admin
+                const isFirstUser = !localStorage.getItem('hasUsers');
+                if (isFirstUser) {
+                    localStorage.setItem('hasUsers', 'true');
+                    window.userRole = 'admin';
+                    localStorage.setItem(`role_${user.uid}`, 'admin');
+                } else {
+                    const savedRole = localStorage.getItem(`role_${user.uid}`);
+                    window.userRole = savedRole || 'user';
+                    if (!savedRole) {
+                        localStorage.setItem(`role_${user.uid}`, 'user');
+                    }
                 }
                 
                 showMainApp();
@@ -101,61 +107,109 @@
             setTimeout(updateUIBasedOnRole, 100);
         }
 
-        // User management functions
-        async function saveUserToFirestore(user) {
-            try {
-                const userRef = doc(db, 'users', user.uid);
-                const userData = {
-                    email: user.email,
-                    uid: user.uid,
-                    lastLogin: new Date(),
-                    updatedAt: new Date()
-                };
-                
-                // Check if this is the first user ever (admin)
-                const usersSnapshot = await getDocs(collection(db, 'users'));
-                if (usersSnapshot.empty) {
-                    userData.role = 'admin';
-                    userData.createdAt = new Date();
-                    console.log('First user - assigning admin role');
-                }
-                
-                await setDoc(userRef, userData, { merge: true });
-                console.log('User saved to Firestore:', user.email);
-            } catch (error) {
-                console.error('Error saving user to Firestore:', error);
-            }
-        }
-
+        // Simplified user role management (without Firestore dependency)
         async function getUserRole(uid) {
-            try {
-                const usersSnapshot = await getDocs(collection(db, 'users'));
-                const userDoc = usersSnapshot.docs.find(doc => doc.id === uid);
-                
-                if (userDoc && userDoc.data().role) {
-                    return userDoc.data().role;
-                }
-                
-                // If no specific role, check if first user (for backward compatibility)
-                if (usersSnapshot.size === 1) {
-                    return 'admin';
-                }
-                
-                return 'user'; // Default role
-            } catch (error) {
-                console.error('Error getting user role:', error);
-                return 'user';
-            }
+            return localStorage.getItem(`role_${uid}`) || 'user';
         }
 
         async function getAllUsers() {
-            try {
-                const usersSnapshot = await getDocs(collection(db, 'users'));
-                return usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            } catch (error) {
-                console.error('Error getting all users:', error);
-                return [];
-            }
+            // This is a placeholder - in production you'd get this from Firestore
+            // For now, we'll return current user
+            return [auth.currentUser].filter(Boolean);
+        }
+
+        // 🎨 Beautiful Notification System
+        function createNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existing = document.querySelectorAll('.custom-notification');
+            existing.forEach(notif => notif.remove());
+
+            const notification = document.createElement('div');
+            notification.className = `custom-notification ${type}`;
+            
+            const colors = {
+                success: { bg: '#10b981', border: '#059669', icon: 'fas fa-check-circle' },
+                error: { bg: '#ef4444', border: '#dc2626', icon: 'fas fa-exclamation-triangle' },
+                info: { bg: '#3b82f6', border: '#2563eb', icon: 'fas fa-info-circle' },
+                warning: { bg: '#f59e0b', border: '#d97706', icon: 'fas fa-exclamation-circle' }
+            };
+
+            const color = colors[type] || colors.info;
+            
+            notification.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: ${color.bg};
+                    color: white;
+                    padding: 1rem 1.5rem;
+                    border-radius: 0.75rem;
+                    border-left: 4px solid ${color.border};
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+                    z-index: 10000;
+                    max-width: 400px;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    animation: slideInRight 0.3s ease-out;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                ">
+                    <i class="${color.icon}" style="font-size: 1.2rem;"></i>
+                    <span style="flex: 1; font-weight: 500;">${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" style="
+                        background: rgba(255,255,255,0.2);
+                        border: none;
+                        color: white;
+                        border-radius: 50%;
+                        width: 24px;
+                        height: 24px;
+                        cursor: pointer;
+                        font-size: 0.8rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">×</button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.animation = 'slideOutRight 0.3s ease-in';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 5000);
+        }
+
+        // Add animation styles to head
+        if (!document.querySelector('#notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'notification-styles';
+            style.textContent = `
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOutRight {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+                
+                /* Mobile responsive notifications */
+                @media (max-width: 768px) {
+                    .custom-notification > div {
+                        right: 10px !important;
+                        left: 10px !important;
+                        max-width: calc(100vw - 20px) !important;
+                        top: 10px !important;
+                        font-size: 0.9rem !important;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
         }
 
         function updateUserInfo() {
@@ -1323,7 +1377,7 @@
             document.getElementById(tab === 'signin' ? 'signinForm' : 'signupForm').classList.add('active');
         }
 
-        // Auth handlers
+        // Auth handlers with beautiful notifications
         async function handleSignIn(event) {
             event.preventDefault();
             const form = event.target;
@@ -1332,9 +1386,9 @@
             
             const result = await window.signInWithEmail(email, password);
             if (result.success) {
-                console.log('Успешен вход');
+                createNotification('✅ Успешен вход в системата!', 'success');
             } else {
-                alert('Грешка при вход: ' + result.error);
+                createNotification('❌ Грешка при вход: ' + result.error, 'error');
             }
         }
 
@@ -1347,33 +1401,33 @@
             const confirmPassword = inputs[2].value;
             
             if (password !== confirmPassword) {
-                alert('Паролите не съвпадат');
+                createNotification('❌ Паролите не съвпадат!', 'error');
                 return;
             }
             
             const result = await window.signUpWithEmail(email, password);
             if (result.success) {
-                console.log('Успешна регистрация');
+                createNotification('🎉 Успешна регистрация! Добре дошли!', 'success');
             } else {
-                alert('Грешка при регистрация: ' + result.error);
+                createNotification('❌ Грешка при регистрация: ' + result.error, 'error');
             }
         }
 
         async function handleGoogleSignIn() {
             const result = await window.signInWithGoogle();
             if (result.success) {
-                console.log('Успешен вход с Google');
+                createNotification('🚀 Успешен вход с Google!', 'success');
             } else {
-                alert('Грешка при вход с Google: ' + result.error);
+                createNotification('❌ Грешка при вход с Google: ' + result.error, 'error');
             }
         }
 
         async function handleSignOut() {
             const result = await window.signOutUser();
             if (result.success) {
-                console.log('Успешен изход');
+                createNotification('👋 Успешен изход от системата', 'info');
             } else {
-                alert('Грешка при изход: ' + result.error);
+                createNotification('❌ Грешка при изход: ' + result.error, 'error');
             }
         }
 
