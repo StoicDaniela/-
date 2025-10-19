@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Profiles - Business Management Platform</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>Business Platform</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="admin-dashboard.html">Dashboard</a></li>
+                <li><a href="client-profiles.html" class="active">Client Profiles</a></li>
+                <li><a href="meeting-scheduler.html">Meeting Scheduler</a></li>
+                <li><a href="#" onclick="showSection('analytics')">Analytics</a></li>
+                <li><a href="#" onclick="showSection('documents')">Documents</a></li>
+                <li><a href="#" onclick="showSection('reports')">Reports</a></li>
+                <li><a href="#" onclick="showSection('settings')">Settings</a></li>
+                <li><a href="index.html" onclick="logout()">Logout</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <h1>Client Profiles Management</h1>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openAddClientModal()">
+                        + Add New Client
+                    </button>
+                </div>
+            </header>
+
+            <!-- Client Profiles Grid -->
+            <div class="clients-grid" id="clientsGrid">
+                <!-- Existing clients will be loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Client Modal -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content client-modal">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">Add New Client</h2>
+            
+            <form id="clientForm" class="client-form">
+                <!-- Basic Info -->
+                <div class="form-section">
+                    <h3>Basic Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clientName">Client Name *</label>
+                            <input type="text" id="clientName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="clientEmail">Email *</label>
+                            <input type="email" id="clientEmail" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clientPhone">Phone</label>
+                            <input type="tel" id="clientPhone">
+                        </div>
+                        <div class="form-group">
+                            <label for="clientCompany">Company</label>
+                            <input type="text" id="clientCompany">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buyer Persona -->
+                <div class="form-section">
+                    <h3>🎯 Buyer Persona</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clientGoals">Primary Goals</label>
+                            <textarea id="clientGoals" placeholder="What does this client want to achieve?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="clientPainPoints">Pain Points</label>
+                            <textarea id="clientPainPoints" placeholder="What problems are they trying to solve?"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clientBudget">Budget Range</label>
+                            <select id="clientBudget">
+                                <option value="">Select budget range</option>
+                                <option value="under-50k">Under 50,000 лв</option>
+                                <option value="50k-100k">50,000 - 100,000 лв</option>
+                                <option value="100k-500k">100,000 - 500,000 лв</option>
+                                <option value="500k-1m">500,000 - 1,000,000 лв</option>
+                                <option value="over-1m">Over 1,000,000 лв</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="clientTimeline">Project Timeline</label>
+                            <select id="clientTimeline">
+                                <option value="">Select timeline</option>
+                                <option value="urgent">Urgent (1-3 months)</option>
+                                <option value="normal">Normal (3-6 months)</option>
+                                <option value="extended">Extended (6-12 months)</option>
+                                <option value="flexible">Flexible (12+ months)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="clientPersonality">Communication Style</label>
+                        <textarea id="clientPersonality" placeholder="How does this client prefer to communicate? Are they detail-oriented, big-picture focused, etc.?"></textarea>
+                    </div>
+                </div>
+
+                <!-- Smart Meeting Hints -->
+                <div class="form-section">
+                    <h3>💡 Smart Meeting Hints</h3>
+                    <div class="form-group">
+                        <label for="meetingPrep">Pre-meeting Preparation Notes</label>
+                        <textarea id="meetingPrep" placeholder="Key points to remember before meeting this client..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="currentStatus">Current Project Status</label>
+                        <textarea id="currentStatus" placeholder="Where are we in the project? What's the next step?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="nextActions">Suggested Next Actions</label>
+                        <textarea id="nextActions" placeholder="What should be discussed in the next meeting?"></textarea>
+                    </div>
+                </div>
+
+                <!-- Project Info -->
+                <div class="form-section">
+                    <h3>📊 Project Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="projectType">Project Type</label>
+                            <select id="projectType">
+                                <option value="">Select project type</option>
+                                <option value="financial-analysis">Financial Analysis</option>
+                                <option value="investment-evaluation">Investment Evaluation</option>
+                                <option value="business-plan">Business Plan Development</option>
+                                <option value="feasibility-study">Feasibility Study</option>
+                                <option value="risk-assessment">Risk Assessment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="projectPhase">Current Phase</label>
+                            <select id="projectPhase">
+                                <option value="">Select phase</option>
+                                <option value="initial-consultation">Initial Consultation</option>
+                                <option value="data-gathering">Data Gathering</option>
+                                <option value="analysis">Analysis & Planning</option>
+                                <option value="implementation">Implementation</option>
+                                <option value="monitoring">Monitoring & Review</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeClientModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Client</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Client Detail Modal -->
+    <div id="clientDetailModal" class="modal">
+        <div class="modal-content client-detail-modal">
+            <span class="close">&times;</span>
+            <div id="clientDetailContent">
+                <!-- Client details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Initialize client profiles page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadClientProfiles();
+            setupClientModalEvents();
+        });
+    </script>
+</body>
+</html>

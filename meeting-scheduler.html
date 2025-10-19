@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Scheduler - Business Management Platform</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>Business Platform</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="admin-dashboard.html">Dashboard</a></li>
+                <li><a href="client-profiles.html">Client Profiles</a></li>
+                <li><a href="meeting-scheduler.html" class="active">Meeting Scheduler</a></li>
+                <li><a href="#" onclick="showSection('analytics')">Analytics</a></li>
+                <li><a href="#" onclick="showSection('documents')">Documents</a></li>
+                <li><a href="#" onclick="showSection('reports')">Reports</a></li>
+                <li><a href="#" onclick="showSection('settings')">Settings</a></li>
+                <li><a href="index.html" onclick="logout()">Logout</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <h1>Meeting Scheduler</h1>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openScheduleMeetingModal()">
+                        📅 Schedule New Meeting
+                    </button>
+                    <button class="btn btn-secondary" onclick="toggleView()">
+                        <span id="viewToggleText">List View</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Meeting Dashboard Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <h3>Today's Meetings</h3>
+                        <p class="stat-number" id="todayMeetings">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏰</div>
+                    <div class="stat-content">
+                        <h3>This Week</h3>
+                        <p class="stat-number" id="weekMeetings">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔔</div>
+                    <div class="stat-content">
+                        <h3>Upcoming</h3>
+                        <p class="stat-number" id="upcomingMeetings">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <h3>Completed</h3>
+                        <p class="stat-number" id="completedMeetings">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar/List Toggle -->
+            <div class="meeting-content">
+                <!-- Calendar View -->
+                <div id="calendarView" class="calendar-container">
+                    <div class="calendar-header">
+                        <button onclick="previousMonth()" class="calendar-nav">‹</button>
+                        <h2 id="currentMonth">October 2025</h2>
+                        <button onclick="nextMonth()" class="calendar-nav">›</button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Calendar will be generated here -->
+                    </div>
+                </div>
+
+                <!-- List View -->
+                <div id="listView" class="meetings-list" style="display: none;">
+                    <div class="meeting-filters">
+                        <select id="clientFilter" onchange="filterMeetings()">
+                            <option value="">All Clients</option>
+                        </select>
+                        <select id="statusFilter" onchange="filterMeetings()">
+                            <option value="">All Status</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <input type="date" id="dateFilter" onchange="filterMeetings()">
+                    </div>
+                    <div id="meetingsList" class="meetings-container">
+                        <!-- Meetings list will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Schedule Meeting Modal -->
+    <div id="meetingModal" class="modal">
+        <div class="modal-content meeting-modal">
+            <span class="close">&times;</span>
+            <h2>Schedule New Meeting</h2>
+            
+            <form id="meetingForm" class="meeting-form">
+                <!-- Basic Meeting Info -->
+                <div class="form-section">
+                    <h3>Meeting Details</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="meetingClient">Client *</label>
+                            <select id="meetingClient" required onchange="loadClientHints()">
+                                <option value="">Select a client</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="meetingType">Meeting Type *</label>
+                            <select id="meetingType" required>
+                                <option value="">Select type</option>
+                                <option value="initial-consultation">Initial Consultation</option>
+                                <option value="progress-review">Progress Review</option>
+                                <option value="presentation">Presentation</option>
+                                <option value="planning-session">Planning Session</option>
+                                <option value="follow-up">Follow-up Call</option>
+                                <option value="final-review">Final Review</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="meetingDate">Date *</label>
+                            <input type="date" id="meetingDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="meetingTime">Time *</label>
+                            <input type="time" id="meetingTime" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="meetingDuration">Duration</label>
+                            <select id="meetingDuration">
+                                <option value="30">30 minutes</option>
+                                <option value="60" selected>1 hour</option>
+                                <option value="90">1.5 hours</option>
+                                <option value="120">2 hours</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="meetingLocation">Location/Platform</label>
+                            <input type="text" id="meetingLocation" placeholder="Office, Zoom, Teams, etc.">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Client Smart Hints (Auto-populated) -->
+                <div class="form-section" id="clientHintsSection" style="display: none;">
+                    <h3>💡 Client Smart Hints</h3>
+                    <div class="smart-hints-display">
+                        <div class="hint-card">
+                            <h4>🎯 Client Goals</h4>
+                            <p id="clientGoalsHint">Select a client to see their goals...</p>
+                        </div>
+                        <div class="hint-card">
+                            <h4>⚠️ Pain Points</h4>
+                            <p id="clientPainPointsHint">Select a client to see their pain points...</p>
+                        </div>
+                        <div class="hint-card">
+                            <h4>💼 Current Status</h4>
+                            <p id="clientStatusHint">Select a client to see current status...</p>
+                        </div>
+                        <div class="hint-card">
+                            <h4>🔄 Next Actions</h4>
+                            <p id="clientNextActionsHint">Select a client to see suggested actions...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meeting Agenda -->
+                <div class="form-section">
+                    <h3>📋 Meeting Agenda</h3>
+                    <div class="form-group">
+                        <label for="meetingAgenda">Agenda & Topics to Discuss</label>
+                        <textarea id="meetingAgenda" rows="4" placeholder="What will you discuss in this meeting?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="meetingPreparation">Preparation Required</label>
+                        <textarea id="meetingPreparation" rows="3" placeholder="What documents or materials need to be prepared?"></textarea>
+                    </div>
+                </div>
+
+                <!-- Reminders -->
+                <div class="form-section">
+                    <h3>🔔 Reminders</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="emailReminder" checked>
+                                Email reminder (24 hours before)
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="smsReminder">
+                                SMS reminder (2 hours before)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeMeetingModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Schedule Meeting</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Meeting Detail Modal -->
+    <div id="meetingDetailModal" class="modal">
+        <div class="modal-content meeting-detail-modal">
+            <span class="close">&times;</span>
+            <div id="meetingDetailContent">
+                <!-- Meeting details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Initialize meeting scheduler
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMeetingScheduler();
+            generateCalendar();
+            setupMeetingModalEvents();
+        });
+    </script>
+</body>
+</html>
