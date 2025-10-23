@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BI Hypothesis Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #a5b4fc;
+            --secondary: #f1f5f9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --dark-lighter: #1e293b;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --gray-lighter: #cbd5e1;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* App Container */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: var(--white);
+            border-radius: var(--radius);
+            margin: 10px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            max-height: calc(100vh - 20px); /* Ensure it fits within viewport */
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--dark) 0%, var(--dark-lighter) 100%);
+            color: var(--white);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto; /* Allow scrolling if needed */
+        }
+
+        .sidebar-header {
+            text-align: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary-light), var(--white));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-light);
+            font-weight: 400;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: auto;
+            flex-shrink: 0; /* Prevent shrinking */
+            padding-top: 1rem; /* Extra space at top */
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--white);
+        }
+
+        .content-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .content-subtitle {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        .content-body {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Dashboard */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .dashboard-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* Cards and Lists */
+        .hypothesis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .hypothesis-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .hypothesis-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .hypothesis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .hypothesis-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .hypothesis-category {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--secondary);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .hypothesis-description {
+            color: var(--gray);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .hypothesis-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--gray-light);
+        }
+
+        .priority-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .priority-high { background: #fee2e2; color: #dc2626; }
+        .priority-medium { background: #fef3c7; color: #d97706; }
+        .priority-low { background: #dcfce7; color: #16a34a; }
+
+        /* Search and Filter */
+        .search-filter {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+        }
+
+        .filter-select {
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            background: var(--white);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            margin: 2% auto;
+            padding: 0;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+            padding: 0.5rem;
+        }
+
+        .close-btn:hover {
+            color: var(--dark);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gray);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Footer - Made Much Smaller */
+        .app-footer {
+            background: var(--white);
+            border-top: 1px solid var(--border);
+            padding: 0.5rem 2rem;
+            font-size: 0.8rem;
+            color: var(--gray);
+            flex-shrink: 0;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success);
+            color: var(--white);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            z-index: 1001;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: var(--danger);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container {
+                margin: 0;
+                border-radius: 0;
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 1rem;
+            }
+            
+            .hypothesis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-lightbulb"></i> BI Manager</h1>
+                <p class="sidebar-subtitle">Управление на бизнес хипотези</p>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-item active" onclick="showSection('dashboard', this)">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Табло</span>
+                </div>
+                <div class="nav-item" onclick="showSection('hypotheses', this)">
+                    <i class="fas fa-flask"></i>
+                    <span>Хипотези</span>
+                </div>
+                <div class="nav-item" onclick="showSection('scenarios', this)">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Сценарии</span>
+                </div>
+                <div class="nav-item" onclick="showSection('analytics', this)">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Анализи</span>
+                </div>
+            </nav>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="openModal('hypothesis-modal')">
+                    <i class="fas fa-plus"></i>
+                    Нова Хипотеза
+                </button>
+                <button class="btn btn-secondary" onclick="openModal('scenario-modal')">
+                    <i class="fas fa-plus"></i>
+                    Нов Сценарий
+                </button>
+                <button class="btn btn-secondary" onclick="exportData()">
+                    <i class="fas fa-download"></i>
+                    Експорт
+                </button>
+                <button class="btn btn-secondary" onclick="importData()">
+                    <i class="fas fa-upload"></i>
+                    Импорт
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h2 class="content-title" id="content-title">Табло</h2>
+                <p class="content-subtitle" id="content-subtitle">Общ преглед на вашите бизнес хипотези</p>
+            </div>
+
+            <div class="content-body">
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="content-section active">
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <h3>Общо хипотези</h3>
+                            <div class="stat-value" id="total-hypotheses">0</div>
+                            <div class="stat-label">Активни хипотези</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Общо сценарии</h3>
+                            <div class="stat-value" id="total-scenarios">0</div>
+                            <div class="stat-label">Бизнес сценарии</div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Висок приоритет</h3>
+                            <div class="stat-value" id="high-priority">0</div>
+                            <div class="stat-label">Критични хипотези</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hypotheses Section -->
+                <div id="hypotheses" class="content-section">
+                    <div class="search-filter">
+                        <input type="text" placeholder="Търсене в хипотези..." class="search-input" id="search-hypotheses" oninput="filterHypotheses()">
+                        <select class="filter-select" id="filter-category" onchange="filterHypotheses()">
+                            <option value="">Всички категории</option>
+                            <option value="marketing">Маркетинг</option>
+                            <option value="sales">Продажби</option>
+                            <option value="product">Продукт</option>
+                            <option value="operations">Операции</option>
+                            <option value="finance">Финанси</option>
+                        </select>
+                        <select class="filter-select" id="filter-priority" onchange="filterHypotheses()">
+                            <option value="">Всички приоритети</option>
+                            <option value="high">Висок</option>
+                            <option value="medium">Среден</option>
+                            <option value="low">Нисък</option>
+                        </select>
+                    </div>
+                    <div id="hypotheses-list" class="hypothesis-grid"></div>
+                </div>
+
+                <!-- Scenarios Section -->
+                <div id="scenarios" class="content-section">
+                    <div id="scenarios-list"></div>
+                </div>
+
+                <!-- Analytics Section -->
+                <div id="analytics" class="content-section">
+                    <div class="dashboard-card">
+                        <h3>Анализи и метрики</h3>
+                        <p>Тук ще се показват детайлни анализи на вашите хипотези и сценарии.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Small Footer -->
+            <div class="app-footer">
+                © 2025 BI Hypothesis Manager | Общо хипотези: <span id="footer-hypotheses">0</span> | Общо сценарии: <span id="footer-scenarios">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for New Hypothesis -->
+    <div id="hypothesis-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="hypothesis-modal-title">Нова Бизнес Хипотеза</h3>
+                <button class="close-btn" onclick="closeModal('hypothesis-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="hypothesis-form">
+                    <div class="form-group">
+                        <label class="form-label">Заглавие на хипотезата *</label>
+                        <input type="text" id="hypothesis-title" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Описание *</label>
+                        <textarea id="hypothesis-description" class="form-textarea" required placeholder="Опишете вашата хипотеза подробно..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Категория</label>
+                        <select id="hypothesis-category" class="form-select">
+                            <option value="marketing">Маркетинг</option>
+                            <option value="sales">Продажби</option>
+                            <option value="product">Продукт</option>
+                            <option value="operations">Операции</option>
+                            <option value="finance">Финанси</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Приоритет</label>
+                        <select id="hypothesis-priority" class="form-select">
+                            <option value="medium">Среден</option>
+                            <option value="low">Нисък</option>
+                            <option value="high">Висок</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Метрики за измерване</label>
+                        <input type="text" id="hypothesis-metrics" class="form-input" placeholder="ROI, Conversion Rate, CTR (разделени със запетая)">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Целева стойност (%)</label>
+                        <input type="number" id="hypothesis-target" class="form-input" min="0" max="100" placeholder="15">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Времеви период (дни)</label>
+                        <input type="number" id="hypothesis-timeframe" class="form-input" min="1" value="30">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('hypothesis-modal')">Отказ</button>
+                <button type="button" class="btn btn-primary" id="hypothesis-submit-btn" onclick="submitHypothesis()">Създай</button>
+            </div>
+            <!-- Debug Panel -->
+            <div id="debug-info" style="background: #f0f0f0; padding: 10px; font-size: 12px; border-top: 1px solid #ccc; display: none;">
+                <strong>Debug:</strong> <span id="debug-text">Ready</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for New Scenario -->
+    <div id="scenario-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="scenario-modal-title">Нов Бизнес Сценарий</h3>
+                <button class="close-btn" onclick="closeModal('scenario-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="scenario-form">
+                    <div class="form-group">
+                        <label class="form-label">Име на сценария *</label>
+                        <input type="text" id="scenario-name" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Описание *</label>
+                        <textarea id="scenario-description" class="form-textarea" required placeholder="Опишете сценария подробно..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Тип сценарий</label>
+                        <select id="scenario-type" class="form-select">
+                            <option value="realistic">Реалистичен</option>
+                            <option value="optimistic">Оптимистичен</option>
+                            <option value="pessimistic">Песимистичен</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Вероятност (%)</label>
+                        <input type="number" id="scenario-probability" class="form-input" min="0" max="100" value="50">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Очакван impact</label>
+                        <select id="scenario-impact" class="form-select">
+                            <option value="medium">Среден</option>
+                            <option value="low">Нисък</option>
+                            <option value="high">Висок</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Ключови показатели</label>
+                        <input type="text" id="scenario-kpis" class="form-input" placeholder="Приходи, Разходи, Клиенти (разделени със запетая)">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('scenario-modal')">Отказ</button>
+                <button type="button" class="btn btn-primary" id="scenario-submit-btn" onclick="submitScenario()">Създай</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Management
+        let hypotheses = JSON.parse(localStorage.getItem('bi-hypotheses') || '[]');
+        let scenarios = JSON.parse(localStorage.getItem('bi-scenarios') || '[]');
+
+        // Global editing state
+        let editingHypothesisId = null;
+        let editingScenarioId = null;
+
+        // Debug function
+        function showDebug(message) {
+            const debugPanel = document.getElementById('debug-info');
+            const debugText = document.getElementById('debug-text');
+            if (debugPanel && debugText) {
+                debugPanel.style.display = 'block';
+                
+                // Ограничаваме броя съобщения за производителност
+                const lines = debugText.innerHTML.split('<br>');
+                if (lines.length > 20) {
+                    const lastLines = lines.slice(-10); // Запазваме само последните 10
+                    debugText.innerHTML = lastLines.join('<br>');
+                }
+                
+                debugText.innerHTML += '<br>' + new Date().toLocaleTimeString() + ': ' + message;
+                console.log('DEBUG:', message);
+                
+                // Скролваме надолу
+                debugText.scrollTop = debugText.scrollHeight;
+            }
+        }
+
+        // Clear debug
+        function showSection(sectionId, navElement) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to clicked navigation item (with safety check)
+            if (navElement && navElement.classList) {
+                navElement.classList.add('active');
+            }
+            
+            // Update header
+            const titles = {
+                dashboard: { title: 'Табло', subtitle: 'Общ преглед на вашите бизнес хипотези' },
+                hypotheses: { title: 'Хипотези', subtitle: 'Управление на бизнес хипотези' },
+                scenarios: { title: 'Сценарии', subtitle: 'Бизнес сценарии и прогнози' },
+                analytics: { title: 'Анализи', subtitle: 'Детайлни анализи и метрики' }
+            };
+            
+            const titleData = titles[sectionId];
+            document.getElementById('content-title').textContent = titleData.title;
+            document.getElementById('content-subtitle').textContent = titleData.subtitle;
+        }
+
+        // Modal Management
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'block';
+            
+            if (modalId === 'hypothesis-modal') {
+                resetHypothesisForm();
+            } else if (modalId === 'scenario-modal') {
+                resetScenarioForm();
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            editingHypothesisId = null;
+            editingScenarioId = null;
+        }
+
+        // Form Management
+        function resetHypothesisForm() {
+            document.getElementById('hypothesis-form').reset();
+            document.getElementById('hypothesis-timeframe').value = 30;
+            document.getElementById('hypothesis-modal-title').textContent = 'Нова Бизнес Хипотеза';
+            document.getElementById('hypothesis-submit-btn').textContent = 'Създай';
+            editingHypothesisId = null;
+        }
+
+        function resetScenarioForm() {
+            document.getElementById('scenario-form').reset();
+            document.getElementById('scenario-probability').value = 50;
+            document.getElementById('scenario-modal-title').textContent = 'Нов Бизнес Сценарий';
+            document.getElementById('scenario-submit-btn').textContent = 'Създай';
+            editingScenarioId = null;
+        }
+
+        // Submit Functions
+        function submitHypothesis() {
+            // Стъпка 1: Вземаме данните
+            const title = document.getElementById('hypothesis-title').value;
+            const description = document.getElementById('hypothesis-description').value;
+            
+            // Стъпка 2: Проверяваме
+            if (!title || !description) {
+                document.getElementById('hypothesis-submit-btn').textContent = 'ПРАЗНИ ПОЛЕТА!';
+                return;
+            }
+            
+            // Стъпка 3: Създаваме хипотезата
+            const newHypothesis = {
+                id: Date.now(),
+                title: title,
+                description: description,
+                category: document.getElementById('hypothesis-category').value,
+                priority: document.getElementById('hypothesis-priority').value,
+                status: 'active',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            // Стъпка 4: Запазваме
+            hypotheses.push(newHypothesis);
+            localStorage.setItem('bi-hypotheses', JSON.stringify(hypotheses));
+            
+            // Стъпка 5: Обновяваме UI
+            renderHypotheses();
+            updateDashboard();
+            
+            // Стъпка 6: Индикация за успех
+            document.getElementById('hypothesis-submit-btn').textContent = '✅ ЗАПАЗЕНО!';
+            
+            // Стъпка 7: Затваряме формата
+            setTimeout(() => {
+                closeModal('hypothesis-modal');
+                document.getElementById('hypothesis-submit-btn').textContent = 'Създай';
+            }, 1000);
+        }
+
+        function submitScenario() {
+            const form = document.getElementById('scenario-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const scenarioData = {
+                name: document.getElementById('scenario-name').value,
+                description: document.getElementById('scenario-description').value,
+                type: document.getElementById('scenario-type').value,
+                probability: parseInt(document.getElementById('scenario-probability').value) || 50,
+                impact: document.getElementById('scenario-impact').value,
+                kpis: document.getElementById('scenario-kpis').value.split(',').map(k => k.trim()).filter(k => k)
+            };
+
+            if (editingScenarioId) {
+                // Edit existing scenario
+                const scenarioIndex = scenarios.findIndex(s => s.id === editingScenarioId);
+                if (scenarioIndex !== -1) {
+                    scenarios[scenarioIndex] = {
+                        ...scenarios[scenarioIndex],
+                        ...scenarioData,
+                        updatedAt: new Date().toISOString()
+                    };
+                    showNotification('Сценарият е редактиран успешно!', 'success');
+                }
+                editingScenarioId = null;
+            } else {
+                // Add new scenario
+                const newScenario = {
+                    id: generateId(),
+                    ...scenarioData,
+                    status: 'active',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                scenarios.push(newScenario);
+                showNotification('Нов сценарий е създаден успешно!', 'success');
+            }
+
+            localStorage.setItem('bi-scenarios', JSON.stringify(scenarios));
+            renderScenarios();
+            updateDashboard();
+            closeModal('scenario-modal');
+        }
+
+        // Rendering Functions
+        function renderHypotheses() {
+            const container = document.getElementById('hypotheses-list');
+            
+            if (hypotheses.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-flask"></i>
+                        <h3>Все още няма хипотези</h3>
+                        <p>Създайте вашата първа бизнес хипотеза, за да започнете.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const filteredHypotheses = getFilteredHypotheses();
+            
+            if (filteredHypotheses.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <h3>Няма намерени хипотези</h3>
+                        <p>Опитайте различни филтри или търсене.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredHypotheses.map(hypothesis => `
+                <div class="hypothesis-card">
+                    <div class="hypothesis-header">
+                        <div>
+                            <h3 class="hypothesis-title">${hypothesis.title}</h3>
+                            <span class="hypothesis-category">${getCategoryLabel(hypothesis.category)}</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary" style="padding: 0.5rem;" onclick="editHypothesis('${hypothesis.id}')" title="Редактиране">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn" style="padding: 0.5rem; background: var(--danger); color: white;" onclick="deleteHypothesis('${hypothesis.id}')" title="Изтриване">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="hypothesis-description">${hypothesis.description}</p>
+                    <div class="hypothesis-meta">
+                        <span class="priority-badge priority-${hypothesis.priority}">${getPriorityLabel(hypothesis.priority)}</span>
+                        <span>${hypothesis.timeframe} дни</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderScenarios() {
+            const container = document.getElementById('scenarios-list');
+            
+            if (scenarios.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>Все още няма сценарии</h3>
+                        <p>Създайте вашия първи бизнес сценарий.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = scenarios.map(scenario => `
+                <div class="hypothesis-card">
+                    <div class="hypothesis-header">
+                        <div>
+                            <h3 class="hypothesis-title">${scenario.name}</h3>
+                            <span class="hypothesis-category">${getTypeLabel(scenario.type)}</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary" style="padding: 0.5rem;" onclick="editScenario('${scenario.id}')" title="Редактиране">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn" style="padding: 0.5rem; background: var(--danger); color: white;" onclick="deleteScenario('${scenario.id}')" title="Изтриване">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="hypothesis-description">${scenario.description}</p>
+                    <div class="hypothesis-meta">
+                        <span class="priority-badge priority-${scenario.impact}">${getImpactLabel(scenario.impact)}</span>
+                        <span>${scenario.probability}% вероятност</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Edit Functions
+        function editHypothesis(id) {
+            const hypothesis = hypotheses.find(h => h.id === id);
+            if (!hypothesis) return;
+
+            editingHypothesisId = id;
+            
+            document.getElementById('hypothesis-title').value = hypothesis.title;
+            document.getElementById('hypothesis-description').value = hypothesis.description;
+            document.getElementById('hypothesis-category').value = hypothesis.category;
+            document.getElementById('hypothesis-priority').value = hypothesis.priority;
+            document.getElementById('hypothesis-metrics').value = hypothesis.metrics ? hypothesis.metrics.join(', ') : '';
+            document.getElementById('hypothesis-target').value = hypothesis.target || '';
+            document.getElementById('hypothesis-timeframe').value = hypothesis.timeframe;
+
+            document.getElementById('hypothesis-modal-title').textContent = 'Редактиране на хипотеза';
+            document.getElementById('hypothesis-submit-btn').textContent = 'Запази промените';
+            
+            openModal('hypothesis-modal');
+        }
+
+        function editScenario(id) {
+            const scenario = scenarios.find(s => s.id === id);
+            if (!scenario) return;
+
+            editingScenarioId = id;
+            
+            document.getElementById('scenario-name').value = scenario.name;
+            document.getElementById('scenario-description').value = scenario.description;
+            document.getElementById('scenario-type').value = scenario.type;
+            document.getElementById('scenario-probability').value = scenario.probability;
+            document.getElementById('scenario-impact').value = scenario.impact;
+            document.getElementById('scenario-kpis').value = scenario.kpis ? scenario.kpis.join(', ') : '';
+
+            document.getElementById('scenario-modal-title').textContent = 'Редактиране на сценарий';
+            document.getElementById('scenario-submit-btn').textContent = 'Запази промените';
+            
+            openModal('scenario-modal');
+        }
+
+        // Delete Functions
+        function deleteHypothesis(id) {
+            if (confirm('Сигурни ли сте, че искате да изтриете тази хипотеза?')) {
+                hypotheses = hypotheses.filter(h => h.id !== id);
+                localStorage.setItem('bi-hypotheses', JSON.stringify(hypotheses));
+                renderHypotheses();
+                updateDashboard();
+                showNotification('Хипотезата е изтрита успешно!', 'success');
+            }
+        }
+
+        function deleteScenario(id) {
+            if (confirm('Сигурни ли сте, че искате да изтриете този сценарий?')) {
+                scenarios = scenarios.filter(s => s.id !== id);
+                localStorage.setItem('bi-scenarios', JSON.stringify(scenarios));
+                renderScenarios();
+                updateDashboard();
+                showNotification('Сценарият е изтрит успешно!', 'success');
+            }
+        }
+
+        // Filter Functions
+        function filterHypotheses() {
+            renderHypotheses();
+        }
+
+        function getFilteredHypotheses() {
+            const searchTerm = document.getElementById('search-hypotheses').value.toLowerCase();
+            const categoryFilter = document.getElementById('filter-category').value;
+            const priorityFilter = document.getElementById('filter-priority').value;
+
+            return hypotheses.filter(hypothesis => {
+                const matchesSearch = hypothesis.title.toLowerCase().includes(searchTerm) ||
+                                    hypothesis.description.toLowerCase().includes(searchTerm);
+                const matchesCategory = !categoryFilter || hypothesis.category === categoryFilter;
+                const matchesPriority = !priorityFilter || hypothesis.priority === priorityFilter;
+
+                return matchesSearch && matchesCategory && matchesPriority;
+            });
+        }
+
+        // Dashboard Update
+        function updateDashboard() {
+            document.getElementById('total-hypotheses').textContent = hypotheses.length;
+            document.getElementById('total-scenarios').textContent = scenarios.length;
+            document.getElementById('high-priority').textContent = hypotheses.filter(h => h.priority === 'high').length;
+            document.getElementById('footer-hypotheses').textContent = hypotheses.length;
+            document.getElementById('footer-scenarios').textContent = scenarios.length;
+        }
+
+        // Export/Import Functions
+        function exportData() {
+            const data = {
+                hypotheses: hypotheses,
+                scenarios: scenarios,
+                exportDate: new Date().toISOString(),
+                version: "1.0"
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bi-data-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showNotification('Данните са експортирани успешно!', 'success');
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        
+                        if (data.hypotheses && data.scenarios) {
+                            if (confirm('Импортът ще замести всички текущи данни. Продължаване?')) {
+                                hypotheses = data.hypotheses || [];
+                                scenarios = data.scenarios || [];
+                                
+                                localStorage.setItem('bi-hypotheses', JSON.stringify(hypotheses));
+                                localStorage.setItem('bi-scenarios', JSON.stringify(scenarios));
+                                
+                                renderHypotheses();
+                                renderScenarios();
+                                updateDashboard();
+                                
+                                showNotification('Данните са импортирани успешно!', 'success');
+                            }
+                        } else {
+                            showNotification('Невалиден формат на файла!', 'error');
+                        }
+                    } catch (error) {
+                        showNotification('Грешка при четене на файла!', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Utility Functions
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function getCategoryLabel(category) {
+            const labels = {
+                marketing: 'Маркетинг',
+                sales: 'Продажби',
+                product: 'Продукт',
+                operations: 'Операции',
+                finance: 'Финанси'
+            };
+            return labels[category] || category;
+        }
+
+        function getPriorityLabel(priority) {
+            const labels = {
+                high: 'Висок',
+                medium: 'Среден',
+                low: 'Нисък'
+            };
+            return labels[priority] || priority;
+        }
+
+        function getTypeLabel(type) {
+            const labels = {
+                optimistic: 'Оптимистичен',
+                realistic: 'Реалистичен',
+                pessimistic: 'Песимистичен'
+            };
+            return labels[type] || type;
+        }
+
+        function getImpactLabel(impact) {
+            const labels = {
+                high: 'Висок',
+                medium: 'Среден',
+                low: 'Нисък'
+            };
+            return labels[impact] || impact;
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDashboard();
+            renderHypotheses();
+            renderScenarios();
+
+            // Close modals when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
+                    editingHypothesisId = null;
+                    editingScenarioId = null;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
