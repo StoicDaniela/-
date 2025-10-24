@@ -798,10 +798,17 @@
                                 </div>
                             </div>
                             
-                            <!-- One Chart Only -->
-                            <div style="margin-bottom: 10px;">
-                                <h3 style="font-size: 0.9rem; margin-bottom: 5px;">📊 Хипотези по приоритет</h3>
-                                <canvas id="hypothesisPriorityChart" width="200" height="120"></canvas>
+                            <!-- Charts Side by Side -->
+                            <div style="display: flex; gap: 15px; margin-bottom: 10px;">
+                                <div>
+                                    <h3 style="font-size: 0.9rem; margin-bottom: 5px;">📊 Хипотези по приоритет</h3>
+                                    <canvas id="hypothesisPriorityChart" width="120" height="60"></canvas>
+                                </div>
+                                
+                                <div>
+                                    <h3 style="font-size: 0.9rem; margin-bottom: 5px;">📈 Сценарии по статус</h3>
+                                    <canvas id="scenarioStatusChart" width="120" height="60"></canvas>
+                                </div>
                             </div>
                             
                             <!-- Mini Summary -->
