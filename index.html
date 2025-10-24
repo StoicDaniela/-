@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index Debug - Final Test</title>
+    <style>
+        /* Copy key styles from original index.html */
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: white;
+            padding: 1.5rem 0;
+            box-shadow: 2px 0 20px rgba(0,0,0,0.08);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            width: 100%;
+            max-width: none;
+        }
+        
+        .content-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            max-width: none;
+            width: 100%;
+        }
+        
+        .content-body {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            box-sizing: border-box;
+            max-width: none;
+            width: 100%;
+        }
+        
+        .nav-menu {
+            flex: 1;
+            padding: 1rem 0;
+        }
+        
+        .nav-item {
+            padding: 0.875rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            color: #64748b;
+            position: relative;
+            z-index: 10;
+            user-select: none;
+            pointer-events: auto;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: #f1f5f9;
+            color: #0ea5e9;
+        }
+        
+        .nav-item:active {
+            background: #0ea5e9;
+            color: white;
+        }
+        
+        .nav-item i {
+            width: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .form-container {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        
+        .form-textarea { resize: vertical; }
+        
+        .btn {
+            background: #0ea5e9;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: #0284c7;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .hypothesis-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .hypothesis-table th,
+        .hypothesis-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .hypothesis-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .hypothesis-item {
+            background: #f1f5f9;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #0ea5e9;
+        }
+        
+        .priority-high { color: #dc2626; font-weight: bold; }
+        .priority-medium { color: #d97706; }
+        .priority-low { color: #16a34a; }
+        
+        /* Debug styles */
+        .debug-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            z-index: 1000;
+            max-width: 250px;
+            max-height: 150px;
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Debug Panel -->
+    <div id="debugPanel" class="debug-info">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <strong style="font-size: 9px;">🔧 Debug</strong>
+            <button onclick="toggleDebugPanel()" style="background: #f59e0b; border: none; color: white; border-radius: 3px; padding: 2px 5px; font-size: 8px; cursor: pointer;">✕</button>
+        </div>
+        <div id="debugText" style="font-size: 9px;">Зареждане...</div>
+    </div>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <h2 class="login-title">📊 BI Manager</h2>
+            <form class="login-form" id="loginForm">
+                <input type="email" class="login-input" id="loginEmail" placeholder="Имейл адрес" required>
+                <input type="password" class="login-input" id="loginPassword" placeholder="Парола" required>
+                <button type="submit" class="login-btn">Влизане</button>
+            </form>
+            <div class="login-link">
+                <a onclick="toggleMode()" id="modeLink">Нямате акаунт? Създайте</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <!-- Logo/Title -->
+            <div style="padding: 0 1.5rem; margin-bottom: 2rem;">
+                <h1 style="color: #0ea5e9; font-size: 1.5rem; margin: 0;">📊 BI Manager</h1>
+                <p style="color: #64748b; font-size: 0.875rem; margin-top: 0.5rem;">Business Intelligence</p>
+            </div>
+            
+            <!-- User Info -->
+            <div class="user-info" style="padding: 0 1.5rem; margin-bottom: 2rem;">
+                <div style="font-size: 0.875rem; color: #64748b;">Влезнал като:</div>
+                <div class="user-email" style="font-weight: 500; color: #374151;">-</div>
+                <div class="user-role" style="font-size: 0.875rem; color: #64748b;">Потребител</div>
+                <button onclick="signOutUser()" style="margin-top: 10px; padding: 8px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; width: 100%;">
+                    🚪 Излизане
+                </button>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="nav-menu">
+                <button class="nav-item active" onclick="showSection('dashboard', this)">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Табло
+                </button>
+                <button class="nav-item" onclick="showSection('hypotheses', this)">
+                    <i class="fas fa-lightbulb"></i>
+                    Хипотези
+                </button>
+                <button class="nav-item" onclick="showSection('scenarios', this)">
+                    <i class="fas fa-project-diagram"></i>
+                    Сценарии
+                </button>
+                <button class="nav-item" onclick="showSection('analytics', this)">
+                    <i class="fas fa-chart-line"></i>
+                    Анализи
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="content-header">
+                <h1 id="pageTitle">Табло</h1>
+            </div>
+            
+            <!-- Content Body -->
+            <div class="content-body" id="contentBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBj-FgO7Zhq80QEKC66qk0SXT3iHDMfwao",
+            authDomain: "bi-test-working.firebaseapp.com",
+            projectId: "bi-test-working",
+            storageBucket: "bi-test-working.firebasestorage.app",
+            messagingSenderId: "613966052987",
+            appId: "1:613966052987:web:81933706980db15784ecde"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Global variables
+        window.auth = auth;
+        window.currentUser = null;
+        window.userRole = null;
+
+        // Notification system
+        function createNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `custom-notification ${type}`;
+            
+            const colors = {
+                success: { bg: '#10b981', border: '#059669', icon: 'fas fa-check-circle' },
+                error: { bg: '#ef4444', border: '#dc2626', icon: 'fas fa-exclamation-triangle' },
+                info: { bg: '#3b82f6', border: '#2563eb', icon: 'fas fa-info-circle' }
+            };
+
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="${colors[type].icon}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            notification.style.cssText = `
+                position: fixed; top: 20px; right: 20px; z-index: 10000;
+                background: ${colors[type].bg}; color: white; padding: 15px 20px;
+                border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                max-width: 400px; animation: slideIn 0.3s ease-out;
+                border-left: 4px solid ${colors[type].border};
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        // Sign in with email and password
+        async function signIn(email, password) {
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                createNotification('✅ Успешно влизане!', 'success');
+                return { success: true, user: userCredential.user };
+            } catch (error) {
+                createNotification(`❌ Грешка: ${error.message}`, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Create user account
+        async function createAccount(email, password) {
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                createNotification('✅ Акаунтът е създаден успешно!', 'success');
+                return { success: true, user: userCredential.user };
+            } catch (error) {
+                createNotification(`❌ Грешка: ${error.message}`, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Sign out
+        async function signOutUser() {
+            try {
+                await signOut(auth);
+                createNotification('👋 Успешно излизане!', 'info');
+            } catch (error) {
+                createNotification(`❌ Грешка при излизане: ${error.message}`, 'error');
+            }
+        }
+
+        // Auth state listener
+        onAuthStateChanged(auth, (user) => {
+            window.currentUser = user;
+            if (user) {
+                showMainApp();
+            } else {
+                showLoginScreen();
+            }
+        });
+
+        // Update user info in UI
+        function updateUserInfo(user) {
+            const userEmail = document.querySelector('.user-email');
+            const userRole = document.querySelector('.user-role');
+            if (userEmail) userEmail.textContent = user.email;
+            if (userRole) userRole.textContent = 'Потребител';
+        }
+
+        // Show main app
+        function showMainApp() {
+            const appContainer = document.querySelector('.app-container');
+            const loginScreen = document.querySelector('.login-screen');
+            if (appContainer) appContainer.style.display = 'flex';
+            if (loginScreen) loginScreen.style.display = 'none';
+            
+            // Update user info if available
+            if (window.currentUser) {
+                updateUserInfo(window.currentUser);
+                updateDebug(`👤 User logged in: ${window.currentUser.email}`);
+                
+                // Load initial content
+                loadContent('dashboard');
+                updateDebug('✅ Initial content loaded');
+            }
+        }
+
+        // Show login screen
+        function showLoginScreen() {
+            const appContainer = document.querySelector('.app-container');
+            const loginScreen = document.querySelector('.login-screen');
+            if (appContainer) appContainer.style.display = 'none';
+            if (loginScreen) loginScreen.style.display = 'flex';
+            
+            updateDebug('🔒 Showing login screen');
+            
+            // Clear form
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        // Make functions available globally
+        window.signIn = signIn;
+        window.createAccount = createAccount;
+        window.signOutUser = signOutUser;
+        window.showLoginScreen = showLoginScreen;
+        window.showMainApp = showMainApp;
+        window.updateUserInfo = updateUserInfo;
+        window.toggleMode = toggleMode;
+    </script>
+
+    <style>
+        /* Login Screen Styles */
+        .login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none; align-items: center; justify-content: center;
+            z-index: 9999;
+        }
+        
+        .login-container {
+            background: white; padding: 40px; border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 400px; width: 90%;
+        }
+        
+        .login-title {
+            text-align: center; margin-bottom: 30px; color: #333; font-size: 24px;
+        }
+        
+        .login-form {
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        
+        .login-input {
+            padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px;
+            font-size: 16px; transition: border-color 0.3s;
+        }
+        
+        .login-input:focus {
+            outline: none; border-color: #667eea;
+        }
+        
+        .login-btn {
+            padding: 15px; background: #667eea; color: white; border: none;
+            border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .login-btn:hover {
+            background: #5a67d8;
+        }
+        
+        .login-link {
+            text-align: center; margin-top: 15px;
+        }
+        
+        .login-link a {
+            color: #667eea; text-decoration: none; cursor: pointer;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+
+    <script>
+        // Data storage
+        let hypotheses = [];
+        let scenarios = [];
+
+        // Debug log function
+        function updateDebug(text) {
+            const debugDiv = document.getElementById('debugText');
+            if (debugDiv) {
+                debugDiv.innerHTML += `<br>${text}`;
+                console.log(text);
+            }
+        }
+
+        // Toggle debug panel
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debugPanel');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                updateDebug('🔓 Debug panel shown');
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        // Navigation function - Direct implementation
+        function showSection(sectionName, element) {
+            updateDebug(`🖱️ Navigation clicked: ${sectionName}`);
+            
+            try {
+                // Update active nav item
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                if (element) {
+                    element.classList.add('active');
+                    updateDebug('✅ Nav item highlighted');
+                }
+
+                // Update page title
+                const titles = {
+                    'dashboard': '📊 Табло',
+                    'hypotheses': '💡 Хипотези',
+                    'scenarios': '📋 Сценарии',
+                    'analytics': '📈 Анализи'
+                };
+                
+                document.getElementById('pageTitle').textContent = titles[sectionName] || 'BI Manager';
+                updateDebug('✅ Page title updated');
+                
+                // Load content
+                loadContent(sectionName);
+                
+            } catch (error) {
+                updateDebug(`❌ Error: ${error.message}`);
+                console.error('Error in showSection:', error);
+            }
+        }
+
+        // Load content function
+        function loadContent(sectionName) {
+            const contentBody = document.getElementById('contentBody');
+            
+            switch(sectionName) {
+                case 'dashboard':
+                    contentBody.innerHTML = `
+                        <div class="card">
+                            <h2>📊 Табло</h2>
+                            <div class="hypothesis-item">
+                                <h3>Добре дошли в BI Manager!</h3>
+                                <p><strong>Съществуващи хипотези:</strong> ${hypotheses.length}</p>
+                                <p><strong>Активни сценарии:</strong> ${scenarios.length}</p>
+                                <p><strong>Последно обновено:</strong> ${new Date().toLocaleTimeString('bg-BG')}</p>
+                            </div>
+                        </div>
+                    `;
+                    updateDebug('📊 Dashboard refreshed');
+                    break;
+                    
+                case 'hypotheses':
+                    contentBody.innerHTML = `
+                        <div class="form-container">
+                            <h3>Добавяне на нова хипотеза</h3>
+                            <div class="form-group">
+                                <label>Заглавие *</label>
+                                <input type="text" id="hypothesisTitle" class="form-input" placeholder="напр. Фокус върху клиенти 45-55 години">
+                            </div>
+                            <div class="form-group">
+                                <label>Описание *</label>
+                                <textarea id="hypothesisDescription" class="form-textarea" rows="3" placeholder="Описание на хипотезата..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Приоритет</label>
+                                <select id="hypothesisPriority" class="form-select">
+                                    <option value="low">Нисък</option>
+                                    <option value="medium" selected>Среден</option>
+                                    <option value="high">Висок</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Очакван резултат</label>
+                                <textarea id="hypothesisExpectedResult" class="form-textarea" rows="2" placeholder="напр. 14 от 20 застраховки (70% от целта)"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Цел (%)</label>
+                                <input type="number" id="hypothesisGoal" class="form-input" placeholder="напр. 70" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>Метрики</label>
+                                <input type="text" id="hypothesisMetrics" class="form-input" placeholder="напр. Брой продажби, Conversion Rate">
+                            </div>
+                            <div class="form-group">
+                                <label>Времева рамка (дни)</label>
+                                <input type="number" id="hypothesisTimeframe" class="form-input" placeholder="напр. 30" min="1">
+                            </div>
+                            <button class="btn" onclick="submitHypothesis()">➕ Добави хипотеза</button>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>Съществуващи хипотези:</h3>
+                            <div id="hypothesesList">
+                                <p>Все още няма добавени хипотези.</p>
+                            </div>
+                        </div>
+                    `;
+                    renderHypotheses();
+                    break;
+                    
+                case 'scenarios':
+                    contentBody.innerHTML = `
+                        <div class="card">
+                            <h2>📋 Сценарии</h2>
+                            <div class="hypothesis-item">
+                                <p>Секция за управление на сценарии.</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'analytics':
+                    contentBody.innerHTML = `
+                        <div class="card">
+                            <h2>📈 Анализи</h2>
+                            <div class="hypothesis-item">
+                                <p>Секция за анализи и статистики.</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            updateDebug('✅ Content loaded');
+        }
+
+        // Hypothesis functions
+        function submitHypothesis() {
+            updateDebug('🚀 submitHypothesis called');
+            
+            try {
+                const title = document.getElementById('hypothesisTitle').value.trim();
+                const description = document.getElementById('hypothesisDescription').value.trim();
+                const priority = document.getElementById('hypothesisPriority').value;
+                const expectedResult = document.getElementById('hypothesisExpectedResult').value.trim();
+                const goal = document.getElementById('hypothesisGoal').value;
+                const metrics = document.getElementById('hypothesisMetrics').value.trim();
+                const timeframe = document.getElementById('hypothesisTimeframe').value;
+                
+                updateDebug(`📋 Form values: ${title.substring(0,20)}..., ${priority}`);
+                
+                if (!title || !description) {
+                    alert('❌ Моля попълнете всички задължителни полета!');
+                    return;
+                }
+                
+                const hypothesis = {
+                    id: Date.now(),
+                    title: title,
+                    description: description,
+                    priority: priority,
+                    expectedResult: expectedResult,
+                    goal: goal ? parseInt(goal) : null,
+                    metrics: metrics,
+                    timeframe: timeframe ? parseInt(timeframe) : null,
+                    author: window.currentUser?.email || 'Unknown',
+                    createdAt: new Date().toISOString()
+                };
+                
+                updateDebug('✅ Hypothesis created');
+                
+                hypotheses.push(hypothesis);
+                updateDebug(`📊 Current count: ${hypotheses.length}`);
+                
+                // Clear form
+                document.getElementById('hypothesisTitle').value = '';
+                document.getElementById('hypothesisDescription').value = '';
+                document.getElementById('hypothesisPriority').value = 'medium';
+                document.getElementById('hypothesisExpectedResult').value = '';
+                document.getElementById('hypothesisGoal').value = '';
+                document.getElementById('hypothesisMetrics').value = '';
+                document.getElementById('hypothesisTimeframe').value = '';
+                updateDebug('🔄 Form cleared');
+                
+                // Update display
+                renderHypotheses();
+                updateDashboard();
+                updateDebug('📋 Hypotheses rendered');
+                updateDebug('📊 Dashboard updated');
+                
+                alert('✅ Хипотезата е добавена успешно!');
+                
+            } catch (error) {
+                updateDebug(`❌ Error: ${error.message}`);
+                console.error('Error adding hypothesis:', error);
+                alert('❌ Грешка при добавяне на хипотеза!');
+            }
+        }
+
+        function renderHypotheses() {
+            const container = document.getElementById('hypothesesList');
+            if (!container) return;
+            
+            if (hypotheses.length === 0) {
+                container.innerHTML = '<p>Все още няма добавени хипотези.</p>';
+                return;
+            }
+            
+            container.innerHTML = hypotheses.map(h => `
+                <div class="hypothesis-item">
+                    <h4>${h.title}</h4>
+                    <p><strong>Описание:</strong> ${h.description}</p>
+                    ${h.expectedResult ? `<p><strong>Очакван резултат:</strong> ${h.expectedResult}</p>` : ''}
+                    ${h.goal ? `<p><strong>Цел:</strong> ${h.goal}%</p>` : ''}
+                    ${h.metrics ? `<p><strong>Метрики:</strong> ${h.metrics}</p>` : ''}
+                    ${h.timeframe ? `<p><strong>Времева рамка:</strong> ${h.timeframe} дни</p>` : ''}
+                    <div style="font-size: 12px; color: #888;">
+                        Приоритет: <span class="priority-${h.priority}">${getPriorityText(h.priority)}</span> | 
+                        Дата: ${formatDate(h.createdAt)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getPriorityText(priority) {
+            const priorities = {
+                'low': 'Нисък',
+                'medium': 'Среден', 
+                'high': 'Висок'
+            };
+            return priorities[priority] || priority;
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('bg-BG');
+        }
+
+        // Update dashboard with current data
+        function updateDashboard() {
+            // Update the dashboard if it's currently loaded
+            const dashboardCard = document.querySelector('.card h2');
+            if (dashboardCard && dashboardCard.textContent.includes('📊')) {
+                const contentBody = document.getElementById('contentBody');
+                if (contentBody && contentBody.innerHTML.includes('Табло')) {
+                    // Refresh dashboard content
+                    loadContent('dashboard');
+                }
+            }
+        }
+
+        // Global variables for auth mode
+        let isSignUp = false;
+
+        // Initialize
+        window.addEventListener('load', function() {
+            updateDebug('🚀 Page loaded successfully');
+            
+            // Setup login form
+            setupLoginForm();
+            
+            updateDebug('🔧 Auth system initialized');
+        });
+
+        // Setup login form handling
+        function setupLoginForm() {
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLoginSubmit);
+            }
+        }
+
+        // Handle login form submission
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            updateDebug(`🔑 Attempting ${isSignUp ? 'sign up' : 'sign in'} for: ${email}`);
+            
+            if (isSignUp) {
+                const result = await createAccount(email, password);
+                if (result.success) {
+                    updateDebug('✅ Account created successfully');
+                }
+            } else {
+                const result = await signIn(email, password);
+                if (result.success) {
+                    updateDebug('✅ Sign in successful');
+                }
+            }
+        }
+
+        // Toggle between login and signup mode
+        function toggleMode() {
+            isSignUp = !isSignUp;
+            const title = document.querySelector('.login-title');
+            const button = document.querySelector('.login-btn');
+            const link = document.getElementById('modeLink');
+            
+            if (isSignUp) {
+                title.textContent = '📝 Създаване на акаунт';
+                button.textContent = 'Създаване';
+                link.textContent = 'Вече имате акаунт? Влезте';
+            } else {
+                title.textContent = '📊 BI Manager';
+                button.textContent = 'Влизане';
+                link.textContent = 'Нямате акаунт? Създайте';
+            }
+            
+            updateDebug(`🔄 Mode switched to: ${isSignUp ? 'signup' : 'signin'}`);
+        }
+
+
+    </script>
+</body>
+</html>
