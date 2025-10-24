@@ -213,6 +213,21 @@
         <div id="debugText" style="font-size: 9px;">Зареждане...</div>
     </div>
 
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <h2 class="login-title">📊 BI Manager</h2>
+            <form class="login-form" id="loginForm">
+                <input type="email" class="login-input" id="loginEmail" placeholder="Имейл адрес" required>
+                <input type="password" class="login-input" id="loginPassword" placeholder="Парола" required>
+                <button type="submit" class="login-btn">Влизане</button>
+            </form>
+            <div class="login-link">
+                <a onclick="toggleMode()" id="modeLink">Нямате акаунт? Създайте</a>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <div class="sidebar">
@@ -225,8 +240,11 @@
             <!-- User Info -->
             <div class="user-info" style="padding: 0 1.5rem; margin-bottom: 2rem;">
                 <div style="font-size: 0.875rem; color: #64748b;">Влезнал като:</div>
-                <div class="user-email" style="font-weight: 500; color: #374151;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="cdb9a8beb98dbaa2bfa6a8bfe3afaa">[email&#160;protected]</a></div>
+                <div class="user-email" style="font-weight: 500; color: #374151;">-</div>
                 <div class="user-role" style="font-size: 0.875rem; color: #64748b;">Потребител</div>
+                <button onclick="signOutUser()" style="margin-top: 10px; padding: 8px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; width: 100%;">
+                    🚪 Излизане
+                </button>
             </div>
             
             <!-- Navigation -->
@@ -266,8 +284,221 @@
 
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBj-FgO7Zhq80QEKC66qk0SXT3iHDMfwao",
+            authDomain: "bi-test-working.firebaseapp.com",
+            projectId: "bi-test-working",
+            storageBucket: "bi-test-working.firebasestorage.app",
+            messagingSenderId: "613966052987",
+            appId: "1:613966052987:web:81933706980db15784ecde"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Global variables
+        window.auth = auth;
+        window.currentUser = null;
+        window.userRole = null;
+
+        // Notification system
+        function createNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `custom-notification ${type}`;
+            
+            const colors = {
+                success: { bg: '#10b981', border: '#059669', icon: 'fas fa-check-circle' },
+                error: { bg: '#ef4444', border: '#dc2626', icon: 'fas fa-exclamation-triangle' },
+                info: { bg: '#3b82f6', border: '#2563eb', icon: 'fas fa-info-circle' }
+            };
+
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="${colors[type].icon}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            notification.style.cssText = `
+                position: fixed; top: 20px; right: 20px; z-index: 10000;
+                background: ${colors[type].bg}; color: white; padding: 15px 20px;
+                border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                max-width: 400px; animation: slideIn 0.3s ease-out;
+                border-left: 4px solid ${colors[type].border};
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        // Sign in with email and password
+        async function signIn(email, password) {
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                createNotification('✅ Успешно влизане!', 'success');
+                return { success: true, user: userCredential.user };
+            } catch (error) {
+                createNotification(`❌ Грешка: ${error.message}`, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Create user account
+        async function createAccount(email, password) {
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                createNotification('✅ Акаунтът е създаден успешно!', 'success');
+                return { success: true, user: userCredential.user };
+            } catch (error) {
+                createNotification(`❌ Грешка: ${error.message}`, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Sign out
+        async function signOutUser() {
+            try {
+                await signOut(auth);
+                createNotification('👋 Успешно излизане!', 'info');
+            } catch (error) {
+                createNotification(`❌ Грешка при излизане: ${error.message}`, 'error');
+            }
+        }
+
+        // Auth state listener
+        onAuthStateChanged(auth, (user) => {
+            window.currentUser = user;
+            if (user) {
+                showMainApp();
+            } else {
+                showLoginScreen();
+            }
+        });
+
+        // Update user info in UI
+        function updateUserInfo(user) {
+            const userEmail = document.querySelector('.user-email');
+            const userRole = document.querySelector('.user-role');
+            if (userEmail) userEmail.textContent = user.email;
+            if (userRole) userRole.textContent = 'Потребител';
+        }
+
+        // Show main app
+        function showMainApp() {
+            const appContainer = document.querySelector('.app-container');
+            const loginScreen = document.querySelector('.login-screen');
+            if (appContainer) appContainer.style.display = 'flex';
+            if (loginScreen) loginScreen.style.display = 'none';
+            
+            // Update user info if available
+            if (window.currentUser) {
+                updateUserInfo(window.currentUser);
+                updateDebug(`👤 User logged in: ${window.currentUser.email}`);
+                
+                // Load initial content
+                loadContent('dashboard');
+                updateDebug('✅ Initial content loaded');
+            }
+        }
+
+        // Show login screen
+        function showLoginScreen() {
+            const appContainer = document.querySelector('.app-container');
+            const loginScreen = document.querySelector('.login-screen');
+            if (appContainer) appContainer.style.display = 'none';
+            if (loginScreen) loginScreen.style.display = 'flex';
+            
+            updateDebug('🔒 Showing login screen');
+            
+            // Clear form
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        // Make functions available globally
+        window.signIn = signIn;
+        window.createAccount = createAccount;
+        window.signOutUser = signOutUser;
+        window.showLoginScreen = showLoginScreen;
+        window.showMainApp = showMainApp;
+        window.updateUserInfo = updateUserInfo;
+        window.toggleMode = toggleMode;
+    </script>
+
+    <style>
+        /* Login Screen Styles */
+        .login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none; align-items: center; justify-content: center;
+            z-index: 9999;
+        }
+        
+        .login-container {
+            background: white; padding: 40px; border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 400px; width: 90%;
+        }
+        
+        .login-title {
+            text-align: center; margin-bottom: 30px; color: #333; font-size: 24px;
+        }
+        
+        .login-form {
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        
+        .login-input {
+            padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px;
+            font-size: 16px; transition: border-color 0.3s;
+        }
+        
+        .login-input:focus {
+            outline: none; border-color: #667eea;
+        }
+        
+        .login-btn {
+            padding: 15px; background: #667eea; color: white; border: none;
+            border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .login-btn:hover {
+            background: #5a67d8;
+        }
+        
+        .login-link {
+            text-align: center; margin-top: 15px;
+        }
+        
+        .login-link a {
+            color: #667eea; text-decoration: none; cursor: pointer;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+
+    <script>
         // Data storage
         let hypotheses = [];
         let scenarios = [];
@@ -450,6 +681,7 @@
                     goal: goal ? parseInt(goal) : null,
                     metrics: metrics,
                     timeframe: timeframe ? parseInt(timeframe) : null,
+                    author: window.currentUser?.email || 'Unknown',
                     createdAt: new Date().toISOString()
                 };
                 
@@ -534,14 +766,70 @@
             }
         }
 
+        // Global variables for auth mode
+        let isSignUp = false;
+
         // Initialize
         window.addEventListener('load', function() {
             updateDebug('🚀 Page loaded successfully');
             
-            // Load initial content
-            loadContent('dashboard');
-            updateDebug('✅ Initial content loaded');
+            // Setup login form
+            setupLoginForm();
+            
+            updateDebug('🔧 Auth system initialized');
         });
+
+        // Setup login form handling
+        function setupLoginForm() {
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLoginSubmit);
+            }
+        }
+
+        // Handle login form submission
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            updateDebug(`🔑 Attempting ${isSignUp ? 'sign up' : 'sign in'} for: ${email}`);
+            
+            if (isSignUp) {
+                const result = await createAccount(email, password);
+                if (result.success) {
+                    updateDebug('✅ Account created successfully');
+                }
+            } else {
+                const result = await signIn(email, password);
+                if (result.success) {
+                    updateDebug('✅ Sign in successful');
+                }
+            }
+        }
+
+        // Toggle between login and signup mode
+        function toggleMode() {
+            isSignUp = !isSignUp;
+            const title = document.querySelector('.login-title');
+            const button = document.querySelector('.login-btn');
+            const link = document.getElementById('modeLink');
+            
+            if (isSignUp) {
+                title.textContent = '📝 Създаване на акаунт';
+                button.textContent = 'Създаване';
+                link.textContent = 'Вече имате акаунт? Влезте';
+            } else {
+                title.textContent = '📊 BI Manager';
+                button.textContent = 'Влизане';
+                link.textContent = 'Нямате акаунт? Създайте';
+            }
+            
+            updateDebug(`🔄 Mode switched to: ${isSignUp ? 'signup' : 'signin'}`);
+        }
+
+
     </script>
 </body>
 </html>
